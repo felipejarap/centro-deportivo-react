@@ -57,15 +57,20 @@ function ClasesForm() {
 
     const nuevosErrores = {};
 
-    // Validaciones de campos obligatorios
+    // Validaciones de campos obligatorios básicos
     if (!formData.nombre.trim()) nuevosErrores.nombre = 'Dato obligatorio';
     if (!formData.tipoId) nuevosErrores.tipoId = 'Dato obligatorio';
-    if (!formData.participantes) nuevosErrores.participantes = 'Dato obligatorio';
     if (!formData.lugar.trim()) nuevosErrores.lugar = 'Dato obligatorio';
     if (!formData.fechaInicio) nuevosErrores.fechaInicio = 'Dato obligatorio';
     if (!formData.fechaTermino) nuevosErrores.fechaTermino = 'Dato obligatorio';
 
-    // VALIDACIÓN DE FECHAS: La fecha de término debe ser posterior a la de inicio
+    // VALIDACIÓN: Cantidad de participantes (estrictamente mayor a 0)
+    const cantParticipantes = parseInt(formData.participantes, 10);
+    if (!formData.participantes || isNaN(cantParticipantes) || cantParticipantes <= 0) {
+      nuevosErrores.participantes = 'La cantidad de participantes debe ser mayor a 0';
+    }
+
+    // VALIDACIÓN DE FECHAS: Término estrictamente posterior a inicio
     if (formData.fechaInicio && formData.fechaTermino) {
       const inicio = new Date(formData.fechaInicio);
       const termino = new Date(formData.fechaTermino);
@@ -75,6 +80,7 @@ function ClasesForm() {
       }
     }
 
+    // Si hay errores, detiene la ejecución y muestra los mensajes
     if (Object.keys(nuevosErrores).length > 0) {
       setErrores(nuevosErrores);
       return;
@@ -83,15 +89,19 @@ function ClasesForm() {
     setErrores({});
 
     const clasesGuardadas = JSON.parse(localStorage.getItem('clases')) || [];
+    const datosAGuardar = {
+      ...formData,
+      participantes: cantParticipantes // Se guarda asegurando formato numérico
+    };
 
     if (id) {
       const actualizadas = clasesGuardadas.map((c) =>
-        c.id === Number(id) ? { ...formData, id: Number(id) } : c
+        c.id === Number(id) ? { ...datosAGuardar, id: Number(id) } : c
       );
       localStorage.setItem('clases', JSON.stringify(actualizadas));
       setMensajeModal('Clase actualizada correctamente.');
     } else {
-      const nuevaClase = { ...formData, id: Date.now() };
+      const nuevaClase = { ...datosAGuardar, id: Date.now() };
       localStorage.setItem('clases', JSON.stringify([...clasesGuardadas, nuevaClase]));
       setMensajeModal('Clase registrada correctamente.');
     }
@@ -148,6 +158,7 @@ function ClasesForm() {
             <input
               type="number"
               name="participantes"
+              min="1"
               value={formData.participantes}
               onChange={handleChange}
               className={`form-control form-control-lg fs-6 ${errores.participantes ? 'is-invalid' : ''}`}
