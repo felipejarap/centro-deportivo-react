@@ -32,7 +32,6 @@ function TiposClasesLista() {
           <table className="table align-middle mb-0">
             <thead>
               <tr className="border-bottom">
-                <th className="fw-bold py-3" style={{ width: '120px' }}>ID</th>
                 <th className="fw-bold py-3">Nombre</th>
                 <th className="fw-bold text-end py-3" style={{ width: '180px' }}>Acciones</th>
               </tr>
@@ -40,7 +39,6 @@ function TiposClasesLista() {
             <tbody>
               {tipos.map((tipo) => (
                 <tr key={tipo.id} className="border-bottom">
-                  <td className="text-secondary py-3">#{tipo.id}</td>
                   <td className="fw-semibold py-3 text-dark">{tipo.nombre}</td>
                   <td className="text-end py-3">
                     <Link to={`/tipos-clases/editar/${tipo.id}`} className="btn btn-sm btn-outline-warning me-2 px-3">
