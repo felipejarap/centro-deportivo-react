@@ -5,6 +5,8 @@ import ClasesLista from './pages/clases/ClasesLista';
 import ClasesForm from './pages/clases/ClasesForm';
 import TiposClasesLista from './pages/tiposClases/TiposClasesLista';
 import TiposClasesForm from './pages/tiposClases/TiposClasesForm';
+import PlanesLista from './pages/planes/PlanesLista';
+import PlanesForm from './pages/planes/PlanesForm';
 
 function App() {
   return (
@@ -21,6 +23,10 @@ function App() {
             <Route path="/tipos-clases" element={<TiposClasesLista />} />
             <Route path="/tipos-clases/nuevo" element={<TiposClasesForm />} />
             <Route path="/tipos-clases/editar/:id" element={<TiposClasesForm />} />
+
+            <Route path="/planes" element={<PlanesLista />} />
+            <Route path="/planes/nuevo" element={<PlanesForm />} />
+            <Route path="/planes/editar/:id" element={<PlanesForm />} />
           </Routes>
         </main>
       </div>

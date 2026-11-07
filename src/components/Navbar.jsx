@@ -47,6 +47,9 @@ function Navbar() {
             <li className="nav-item">
               <NavLink className="nav-link text-light" to="/alumnos">Alumnos</NavLink>
             </li>
+            <li className="nav-item">
+              <NavLink className="nav-link text-light" to="/planes">Planes</NavLink>
+            </li>
 
           </ul>
 
