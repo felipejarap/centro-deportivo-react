@@ -1,21 +1,15 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
 body {
-    background-color: #f7fafc;
-    min-height: 100vh;
-    margin: 0;
+  font-family: var(--font-sans);
 }
 
-.bg-navbar {
-    background-color: #101d26 !important;
-    border-bottom: 1px solid #1e293b;
-}
-
-.bg-navbar .nav-link {
-    color: #94a3b8 !important;
-    transition: color 0.2s ease;
-    padding: 6px 12px !important;
-}
-
-.bg-navbar .nav-link:hover,
-.bg-navbar .nav-link.active {
-    color: #ffffff !important;
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
 }
