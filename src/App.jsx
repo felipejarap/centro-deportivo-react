@@ -1,37 +1,114 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-import ClasesLista from './pages/clases/ClasesLista';
-import ClasesForm from './pages/clases/ClasesForm';
-import TiposClasesLista from './pages/tiposClases/TiposClasesLista';
-import TiposClasesForm from './pages/tiposClases/TiposClasesForm';
-import PlanesLista from './pages/planes/PlanesLista';
-import PlanesForm from './pages/planes/PlanesForm';
+import React from 'react';
+import { GymProvider, useGym } from './context/GymContext.jsx';
+import { Navbar } from './components/Navbar.jsx';
+import { Footer } from './components/Footer.jsx';
+import { ToastContainer } from './components/Toast.jsx';
 
-function App() {
+// Public pages
+import { HomePage } from './pages/public/HomePage.jsx';
+import { PlansPage } from './pages/public/PlansPage.jsx';
+import { ClassesPage } from './pages/public/ClassesPage.jsx';
+import { AboutPage } from './pages/public/AboutPage.jsx';
+import { LoginPage } from './pages/public/LoginPage.jsx';
+import { RegisterPage } from './pages/public/RegisterPage.jsx';
+
+// Professor pages
+import { ProfessorClassesPage } from './pages/professor/ProfessorClassesPage.jsx';
+import { ClassDetailPage } from './pages/professor/ClassDetailPage.jsx';
+
+// Student pages
+import { StudentClassesPage } from './pages/student/StudentClassesPage.jsx';
+import { StudentReservationsPage } from './pages/student/StudentReservationsPage.jsx';
+import { StudentSubscriptionPage } from './pages/student/StudentSubscriptionPage.jsx';
+
+// Admin pages
+import { AdminUsersPage } from './pages/admin/AdminUsersPage.jsx';
+import { AdminRolesPage } from './pages/admin/AdminRolesPage.jsx';
+import { AdminClassesPage } from './pages/admin/AdminClassesPage.jsx';
+import { AdminPlansPage } from './pages/admin/AdminPlansPage.jsx';
+import { AdminReservationsPage } from './pages/admin/AdminReservationsPage.jsx';
+import { AdminSubscriptionsPage } from './pages/admin/AdminSubscriptionsPage.jsx';
+
+// General page
+import { ProfilePage } from './pages/general/ProfilePage.jsx';
+
+const AppContent = () => {
+  const { currentView } = useGym();
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      // Public Pages
+      case 'inicio':
+        return <HomePage />;
+      case 'planes':
+        return <PlansPage />;
+      case 'clases':
+        return <ClassesPage />;
+      case 'nosotros':
+        return <AboutPage />;
+      case 'login':
+        return <LoginPage />;
+      case 'registro':
+        return <RegisterPage />;
+
+      // Professor Pages
+      case 'profesor-clases':
+        return <ProfessorClassesPage />;
+      case 'profesor-detalle-clase':
+        return <ClassDetailPage />;
+
+      // Student Pages
+      case 'alumno-clases':
+        return <StudentClassesPage />;
+      case 'alumno-reservas':
+        return <StudentReservationsPage />;
+      case 'alumno-suscripcion':
+        return <StudentSubscriptionPage />;
+
+      // Admin CRUD Pages
+      case 'admin-usuarios':
+        return <AdminUsersPage />;
+      case 'admin-roles':
+        return <AdminRolesPage />;
+      case 'admin-clases':
+        return <AdminClassesPage />;
+      case 'admin-planes':
+        return <AdminPlansPage />;
+      case 'admin-reservas':
+        return <AdminReservationsPage />;
+      case 'admin-suscripciones':
+        return <AdminSubscriptionsPage />;
+
+      // General Page
+      case 'perfil':
+        return <ProfilePage />;
+
+      default:
+        return <HomePage />;
+    }
+  };
+
   return (
-    <Router>
-      <div className="min-vh-100 bg-light">
-        <Navbar />
-        <main className="pb-5">
-          <Routes>
-            <Route path="/" element={<Navigate to="/clases" replace />} />
-            <Route path="/clases" element={<ClasesLista />} />
-            <Route path="/clases/nueva" element={<ClasesForm />} />
-            <Route path="/clases/editar/:id" element={<ClasesForm />} />
+    <div className="min-h-screen flex flex-col bg-neutral-950 text-neutral-100 selection:bg-amber-500 selection:text-neutral-950">
+      <Navbar />
+      <main className="flex-1">
+        {renderCurrentView()}
+      </main>
+      <Footer />
+      <ToastContainer />
+    </div>
+  );
+};
 
-            <Route path="/tipos-clases" element={<TiposClasesLista />} />
-            <Route path="/tipos-clases/nuevo" element={<TiposClasesForm />} />
-            <Route path="/tipos-clases/editar/:id" element={<TiposClasesForm />} />
-
-            <Route path="/planes" element={<PlanesLista />} />
-            <Route path="/planes/nuevo" element={<PlanesForm />} />
-            <Route path="/planes/editar/:id" element={<PlanesForm />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+export default function App() {
+  return (
+    <GymProvider>
+      <AppContent />
+    </GymProvider>
   );
 }
-
-export default App;
