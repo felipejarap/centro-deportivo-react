@@ -1,69 +1,350 @@
-import { Link, NavLink } from 'react-router-dom';
-import logo from '../assets/logo.svg';
+import React, { useState } from 'react';
+import { useGym } from '../context/GymContext.jsx';
+import { User as UserIcon, LogOut, ChevronDown, Dumbbell } from 'lucide-react';
 
-function Navbar() {
+export const Navbar = () => {
+  const {
+    currentUser,
+    currentView,
+    setCurrentView,
+    logout,
+    switchRole,
+    setViewingProfileUserId,
+    resetDemoData,
+    roles,
+    can
+  } = useGym();
+
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+
+  const isPublicView = ['inicio', 'planes', 'clases', 'nosotros', 'login', 'registro'].includes(currentView);
+
+  const handleNavClick = view => {
+    setViewingProfileUserId(null);
+    setCurrentView(view);
+  };
+
+  const handleProfileClick = () => {
+    setViewingProfileUserId(null);
+    setCurrentView('perfil');
+  };
+
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-      <div className="container-fluid px-4">
-        
-        {/* BRANDING */}
-        <Link className="navbar-brand d-flex align-items-center gap-2 fw-bold me-auto" to="/">
-          <img src={logo} alt="Kronofit Logo" width="30" height="30" className="d-inline-block align-text-top object-fit-contain" />
-          <span className="fs-4 text-white fw-extrabold tracking-wide">KRONOFIT</span>
-        </Link>
-
-        {/* BOTÓN HAMBURGUESA */}
-        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-          <span className="navbar-toggler-icon"></span>
-        </button>
-
-        {/* ENLACES CENTRALES Y DERECHA */}
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav mx-auto mb-2 mb-lg-0 gap-3">
-            
-            {/* DESPLEGABLE DE CLASES */}
-            <li className="nav-item dropdown">
-              <a className="nav-link dropdown-toggle text-light" href="#" id="navbarDropdownClases" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Clases
-              </a>
-              <ul className="dropdown-menu dropdown-menu-dark border-0 shadow mt-2" aria-labelledby="navbarDropdownClases">
-                <li>
-                  <NavLink className="dropdown-item py-2" to="/clases">
-                    Gestión de Clases
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink className="dropdown-item py-2" to="/tipos-clases">
-                    Tipos de Clase
-                  </NavLink>
-                </li>
-              </ul>
-            </li>
-
-            {/* MÓDULOS ADICIONALES */}
-            <li className="nav-item">
-              <NavLink className="nav-link text-light" to="/profesores">Profesores</NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link text-light" to="/alumnos">Alumnos</NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link text-light" to="/planes">Planes</NavLink>
-            </li>
-
-          </ul>
-
-          {/* ACCESOS DERECHA */}
-          <div className="d-flex align-items-center gap-3">
-            <Link to="/login" className="text-light text-decoration-none">Login</Link>
-            <Link to="/registro" className="btn btn-primary rounded-pill px-4 py-1 fw-semibold">Registro</Link>
+    <header className="sticky top-0 z-40 w-full bg-neutral-950/90 backdrop-blur-md border-b border-neutral-900">
+      {/* Demo helper banner to easily test all requested pages and roles */}
+      <div className="bg-neutral-900/70 border-b border-neutral-800/60 px-4 py-1.5 text-[11px] text-neutral-400 flex items-center justify-between">
+        <div className="flex items-center gap-2 overflow-x-auto py-0.5">
+          <span className="text-neutral-500 font-medium whitespace-nowrap">Simulador de Roles:</span>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => switchRole('invitado')}
+              className={`px-2 py-0.5 rounded transition-colors whitespace-nowrap cursor-pointer ${
+                !currentUser ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30' : 'hover:text-neutral-200'
+              }`}
+            >
+              Invitado (Público)
+            </button>
+            <span className="text-neutral-700">·</span>
+            {roles.map((r, idx) => {
+              const isSelected = currentUser?.rol === r.id;
+              return (
+                <React.Fragment key={r.id}>
+                  {idx > 0 && <span className="text-neutral-700">·</span>}
+                  <button
+                    onClick={() => switchRole(r.id)}
+                    className={`px-2 py-0.5 rounded transition-colors whitespace-nowrap cursor-pointer ${
+                      isSelected ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30' : 'hover:text-neutral-200'
+                    }`}
+                  >
+                    {r.nombre}
+                  </button>
+                </React.Fragment>
+              );
+            })}
           </div>
-
         </div>
 
+        <button
+          onClick={resetDemoData}
+          className="text-[11px] text-neutral-500 hover:text-amber-400 transition-colors whitespace-nowrap hidden sm:inline-block cursor-pointer"
+          title="Restablecer datos originales"
+        >
+          Reiniciar Datos
+        </button>
       </div>
-    </nav>
-  );
-}
 
-export default Navbar;
+      {/* Main Top Bar fulfilling 3-zone contract */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
+        {/* Zone 1: Brand wordmark in display face */}
+        <div
+          onClick={() => handleNavClick(currentUser ? (currentUser.rol === 'admin' ? 'admin-usuarios' : currentUser.rol === 'profesor' ? 'profesor-clases' : 'alumno-clases') : 'inicio')}
+          className="flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-amber-500 text-neutral-950 flex items-center justify-center font-black group-hover:scale-105 transition-transform">
+            <Dumbbell className="w-4 h-4 stroke-[2.5]" />
+          </div>
+          <span className="font-display font-bold text-xl tracking-tight text-neutral-100 group-hover:text-amber-400 transition-colors">
+            KRONO<span className="text-amber-500">FIT</span>
+          </span>
+        </div>
+
+        {/* Zone 2: 4-5 single-line clean text navigation links */}
+        <nav className="hidden md:flex items-center gap-6 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+          {(!currentUser || isPublicView) && (
+            <>
+              <button
+                onClick={() => handleNavClick('inicio')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'inicio' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Inicio
+              </button>
+              <button
+                onClick={() => handleNavClick('planes')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'planes' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Planes
+              </button>
+              <button
+                onClick={() => handleNavClick('clases')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'clases' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Clases
+              </button>
+              <button
+                onClick={() => handleNavClick('nosotros')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'nosotros' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Nosotros
+              </button>
+              {!currentUser && (
+                <button
+                  onClick={() => handleNavClick('login')}
+                  className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    currentView === 'login' ? 'text-amber-400' : 'hover:text-neutral-100'
+                  }`}
+                >
+                  Login
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Student Navigation */}
+          {currentUser && currentUser.rol === 'alumno' && !isPublicView && (
+            <>
+              <button
+                onClick={() => handleNavClick('alumno-clases')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'alumno-clases' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Clases Disponibles
+              </button>
+              <button
+                onClick={() => handleNavClick('alumno-reservas')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'alumno-reservas' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Mis Reservas
+              </button>
+              <button
+                onClick={() => handleNavClick('alumno-suscripcion')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'alumno-suscripcion' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Mi Suscripción
+              </button>
+              <button
+                onClick={handleProfileClick}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'perfil' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Mi Perfil
+              </button>
+            </>
+          )}
+
+          {/* Professor Navigation */}
+          {currentUser && currentUser.rol === 'profesor' && !isPublicView && (
+            <>
+              <button
+                onClick={() => handleNavClick('profesor-clases')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'profesor-clases' || currentView === 'profesor-detalle-clase' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Mis Clases
+              </button>
+              <button
+                onClick={handleProfileClick}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'perfil' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Mi Perfil
+              </button>
+            </>
+          )}
+
+          {/* Admin Navigation */}
+          {currentUser && currentUser.rol === 'admin' && !isPublicView && (
+            <>
+              <button
+                onClick={() => handleNavClick('admin-usuarios')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'admin-usuarios' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Usuarios
+              </button>
+              <button
+                onClick={() => handleNavClick('admin-roles')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'admin-roles' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Roles
+              </button>
+              <button
+                onClick={() => handleNavClick('admin-clases')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'admin-clases' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Clases
+              </button>
+              <button
+                onClick={() => handleNavClick('admin-planes')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'admin-planes' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Planes
+              </button>
+              <button
+                onClick={() => handleNavClick('admin-reservas')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'admin-reservas' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Reservas
+              </button>
+              <button
+                onClick={() => handleNavClick('admin-suscripciones')}
+                className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  currentView === 'admin-suscripciones' ? 'text-amber-400' : 'hover:text-neutral-100'
+                }`}
+              >
+                Suscripciones
+              </button>
+            </>
+          )}
+        </nav>
+
+        {/* Zone 3: 1 primary action */}
+        <div className="flex items-center gap-3 shrink-0">
+          {currentUser ? (
+            <div className="relative">
+              <div
+                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-neutral-800 bg-neutral-900/80 hover:border-neutral-700 cursor-pointer transition-all"
+              >
+                <img
+                  src={currentUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'}
+                  alt={currentUser.nombre}
+                  referrerPolicy="no-referrer"
+                  className="w-7 h-7 rounded-full object-cover ring-1 ring-amber-500/40"
+                />
+                <div className="text-left hidden sm:block">
+                  <div className="text-xs font-semibold text-neutral-100 leading-tight">
+                    {currentUser.nombre}
+                  </div>
+                  <div className="text-[10px] text-amber-400 uppercase font-mono tracking-wider">
+                    {currentUser.rol}
+                  </div>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
+              </div>
+
+              {/* Dropdown Menu */}
+              {roleMenuOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-56 bg-neutral-900 border border-neutral-800 rounded-lg shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150"
+                  onClick={() => setRoleMenuOpen(false)}
+                >
+                  <div className="px-3.5 py-2 border-b border-neutral-800">
+                    <p className="text-xs font-semibold text-neutral-200">{currentUser.nombre} {currentUser.apellido}</p>
+                    <p className="text-[11px] text-neutral-400 truncate">{currentUser.email}</p>
+                  </div>
+
+                  <button
+                    onClick={handleProfileClick}
+                    className="w-full text-left px-3.5 py-2 text-xs text-neutral-300 hover:bg-neutral-800 flex items-center gap-2 cursor-pointer"
+                  >
+                    <UserIcon className="w-3.5 h-3.5 text-neutral-400" />
+                    Mi Perfil
+                  </button>
+
+                  {/* Quick role jump */}
+                  <div className="my-1 border-t border-neutral-800 pt-1">
+                    <div className="px-3.5 py-1 text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
+                      Cambiar de Rol
+                    </div>
+                    {roles.map(r => (
+                      <button
+                        key={r.id}
+                        onClick={() => switchRole(r.id)}
+                        className={`w-full text-left px-3.5 py-1.5 text-xs flex items-center justify-between cursor-pointer ${
+                          currentUser.rol === r.id ? 'text-amber-400 bg-amber-500/10 font-medium' : 'text-neutral-400 hover:bg-neutral-800'
+                        }`}
+                      >
+                        <span>{r.nombre}</span>
+                        {currentUser.rol === r.id && <span className="text-[10px]">Activo</span>}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-neutral-800 mt-1 pt-1">
+                    <button
+                      onClick={logout}
+                      className="w-full text-left px-3.5 py-2 text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleNavClick('login')}
+                className="hidden sm:inline-block px-3.5 py-2 text-xs font-semibold text-neutral-300 hover:text-white transition-colors cursor-pointer"
+              >
+                Ingresar
+              </button>
+              <button
+                onClick={() => handleNavClick('registro')}
+                className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-lg shadow-amber-500/10"
+              >
+                Registrarme
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
