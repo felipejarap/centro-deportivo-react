@@ -5,8 +5,9 @@ import { CreditCard, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react
 export const StudentSubscriptionPage = () => {
   const { subscriptions, plans, currentUser, renewSubscription, cancelSubscription } = useGym();
 
-  const mySubscription = subscriptions.find(s => s.usuarioId === currentUser?.id) || subscriptions[0];
+  const mySubscription = subscriptions.find(s => s.usuarioId === currentUser?.id);
   const currentPlan = plans.find(p => p.id === mySubscription?.planId);
+  const subscriptionPrice = mySubscription?.precio ?? mySubscription?.monto ?? currentPlan?.precio;
 
   const [confirmCancelModal, setConfirmCancelModal] = useState(false);
 
@@ -64,7 +65,7 @@ export const StudentSubscriptionPage = () => {
           <div className="sm:text-right">
             <div className="text-xs text-neutral-400">Tarifa Vigente</div>
             <div className="text-2xl sm:text-3xl font-black font-mono text-neutral-100 tabular-nums">
-              ${mySubscription?.precio.toLocaleString('es-CL') || '45.990'}
+              ${subscriptionPrice?.toLocaleString('es-CL') || '—'}
               <span className="text-xs text-neutral-400 font-sans font-normal"> / mes</span>
             </div>
           </div>

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { GymProvider, useGym } from './context/GymContext.jsx';
 import { Navbar } from './components/Navbar.jsx';
 import { Footer } from './components/Footer.jsx';
@@ -38,9 +38,50 @@ import { AdminSubscriptionsPage } from './pages/admin/AdminSubscriptionsPage.jsx
 import { ProfilePage } from './pages/general/ProfilePage.jsx';
 
 const AppContent = () => {
-  const { currentView } = useGym();
+  const { currentUser, currentView, setCurrentView } = useGym();
+  const requiredRole = {
+    'profesor-clases': 'profesor',
+    'profesor-detalle-clase': 'profesor',
+    'alumno-clases': 'alumno',
+    'alumno-reservas': 'alumno',
+    'alumno-suscripcion': 'alumno',
+    'admin-usuarios': 'admin',
+    'admin-roles': 'admin',
+    'admin-clases': 'admin',
+    'admin-planes': 'admin',
+    'admin-reservas': 'admin',
+    'admin-suscripciones': 'admin'
+  }[currentView];
+
+  useEffect(() => {
+    if (currentView === 'perfil' && !currentUser) {
+      setCurrentView('login');
+    } else if (requiredRole && currentUser?.rol !== requiredRole) {
+      if (!currentUser) {
+        setCurrentView('login');
+      } else if (currentUser.rol === 'admin') {
+        setCurrentView('admin-usuarios');
+      } else if (currentUser.rol === 'profesor') {
+        setCurrentView('profesor-clases');
+      } else if (currentUser.rol === 'alumno') {
+        setCurrentView('alumno-clases');
+      } else {
+        setCurrentView('inicio');
+      }
+    }
+  }, [currentUser, currentView, requiredRole, setCurrentView]);
 
   const renderCurrentView = () => {
+    if (currentView === 'perfil' && !currentUser) return <LoginPage />;
+
+    if (requiredRole && currentUser?.rol !== requiredRole) {
+      if (!currentUser) return <LoginPage />;
+      if (currentUser.rol === 'admin') return <AdminUsersPage />;
+      if (currentUser.rol === 'profesor') return <ProfessorClassesPage />;
+      if (currentUser.rol === 'alumno') return <StudentClassesPage />;
+      return <HomePage />;
+    }
+
     switch (currentView) {
       // Public Pages
       case 'inicio':
