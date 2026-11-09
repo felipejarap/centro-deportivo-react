@@ -10,6 +10,8 @@ import {
 } from '../data/initialData.js';
 
 const GymContext = createContext(undefined);
+const AUTH_SESSION_VERSION = '2';
+const INITIAL_DATA_VERSION = '2';
 
 export const GymProvider = ({ children }) => {
   const loadStored = (key, fallback) => {
@@ -21,21 +23,40 @@ export const GymProvider = ({ children }) => {
     }
   };
 
+  const loadSeeded = (key, fallback) => {
+    const versionKey = `kronofit_${key}_seed_version`;
+    if (localStorage.getItem(versionKey) !== INITIAL_DATA_VERSION) {
+      localStorage.setItem(versionKey, INITIAL_DATA_VERSION);
+      return fallback;
+    }
+    return loadStored(key, fallback);
+  };
+
   const [roles, setRoles] = useState(() => loadStored('roles', INITIAL_ROLES));
-  const [users, setUsers] = useState(() => loadStored('users', INITIAL_USERS));
-  const [classes, setClasses] = useState(() => loadStored('classes', INITIAL_CLASSES));
+  const [users, setUsers] = useState(() => loadSeeded('users', INITIAL_USERS));
+  const [classes, setClasses] = useState(() => loadSeeded('classes', INITIAL_CLASSES));
   const [plans, setPlans] = useState(() => loadStored('plans', INITIAL_PLANS));
-  const [reservations, setReservations] = useState(() => loadStored('reservations', INITIAL_RESERVATIONS));
-  const [subscriptions, setSubscriptions] = useState(() => loadStored('subscriptions', INITIAL_SUBSCRIPTIONS));
+  const [reservations, setReservations] = useState(() => loadSeeded('reservations', INITIAL_RESERVATIONS));
+  const [subscriptions, setSubscriptions] = useState(() => loadSeeded('subscriptions', INITIAL_SUBSCRIPTIONS));
 
   const [currentUser, setCurrentUser] = useState(() => {
+    if (localStorage.getItem('kronofit_auth_version') !== AUTH_SESSION_VERSION) {
+      localStorage.removeItem('kronofit_current_user_id');
+      localStorage.setItem('kronofit_auth_version', AUTH_SESSION_VERSION);
+      return null;
+    }
+
     const savedUserId = localStorage.getItem('kronofit_current_user_id');
     if (savedUserId === 'guest') return null;
-    const found = users.find(u => u.id === savedUserId);
-    return found || users.find(u => u.rol === 'alumno') || users[0] || null;
+    return users.find(u => u.id === savedUserId && u.estado === 'activo') || null;
   });
 
-  const [currentView, setCurrentView] = useState('inicio');
+  const [currentView, setCurrentView] = useState(() => {
+    if (currentUser?.rol === 'admin') return 'admin-usuarios';
+    if (currentUser?.rol === 'profesor') return 'profesor-clases';
+    if (currentUser?.rol === 'alumno') return 'alumno-clases';
+    return 'inicio';
+  });
   const [selectedClassId, setSelectedClassId] = useState(null);
   const [viewingProfileUserId, setViewingProfileUserId] = useState(null);
   const [preselectedPlanId, setPreselectedPlanId] = useState(null);
@@ -174,16 +195,20 @@ export const GymProvider = ({ children }) => {
 
   // Auth & Session
   const login = (email, password) => {
-    const user = users.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
-    if (user) {
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const user = users.find(
+      u => u.email.toLowerCase() === normalizedEmail && u.password === password && u.estado === 'activo'
+    );
+    if (user && typeof password === 'string' && password.length > 0) {
       setCurrentUser(user);
       if (user.rol === 'admin') setCurrentView('admin-usuarios');
       else if (user.rol === 'profesor') setCurrentView('profesor-clases');
-      else setCurrentView('alumno-clases');
+      else if (user.rol === 'alumno') setCurrentView('alumno-clases');
+      else setCurrentView('inicio');
       addToast('success', `¡Bienvenido(a), ${user.nombre}!`);
       return true;
     }
-    addToast('error', 'Credenciales no encontradas. Verifica tus datos o usa un rol demo.');
+    addToast('error', 'Correo o contraseña incorrectos, o cuenta inactiva.');
     return false;
   };
 
@@ -191,26 +216,6 @@ export const GymProvider = ({ children }) => {
     setCurrentUser(null);
     setCurrentView('inicio');
     addToast('info', 'Has cerrado sesión exitosamente.');
-  };
-
-  const switchRole = roleId => {
-    if (roleId === 'invitado') {
-      setCurrentUser(null);
-      setCurrentView('inicio');
-      addToast('info', 'Modo Navegación Pública (Invitado)');
-      return;
-    }
-
-    const matched = users.find(u => u.rol === roleId && u.estado === 'activo');
-    if (matched) {
-      setCurrentUser(matched);
-      if (roleId === 'admin') setCurrentView('admin-usuarios');
-      else if (roleId === 'profesor') setCurrentView('profesor-clases');
-      else setCurrentView('alumno-clases');
-      addToast('success', `Cambiado a rol: ${matched.nombre} (${roleId.toUpperCase()})`);
-    } else {
-      addToast('info', `No hay usuarios activos asignados al rol "${roleId}".`);
-    }
   };
 
   // User CRUD
@@ -271,6 +276,15 @@ export const GymProvider = ({ children }) => {
 
     addToast('success', `Usuario ${newUser.nombre} ${newUser.apellido} registrado exitosamente.`);
     return { success: true, user: newUser };
+  };
+
+  const registerUser = userData => {
+    const result = createUser({ ...userData, rol: 'alumno' });
+    if (!result.success) return result;
+
+    setCurrentUser(result.user);
+    setCurrentView('alumno-clases');
+    return result;
   };
 
   const updateUser = (id, userData) => {
@@ -524,26 +538,6 @@ export const GymProvider = ({ children }) => {
     addToast('success', 'Suscripción actualizada.');
   };
 
-  const resetDemoData = () => {
-    localStorage.removeItem('kronofit_roles');
-    localStorage.removeItem('kronofit_users');
-    localStorage.removeItem('kronofit_classes');
-    localStorage.removeItem('kronofit_plans');
-    localStorage.removeItem('kronofit_reservations');
-    localStorage.removeItem('kronofit_subscriptions');
-    localStorage.removeItem('kronofit_current_user_id');
-
-    setRoles(INITIAL_ROLES);
-    setUsers(INITIAL_USERS);
-    setClasses(INITIAL_CLASSES);
-    setPlans(INITIAL_PLANS);
-    setReservations(INITIAL_RESERVATIONS);
-    setSubscriptions(INITIAL_SUBSCRIPTIONS);
-    setCurrentUser(INITIAL_USERS.find(u => u.rol === 'alumno') || null);
-    setCurrentView('inicio');
-    addToast('info', 'Datos y roles restablecidos a valores por defecto.');
-  };
-
   return (
     <GymContext.Provider
       value={{
@@ -563,7 +557,6 @@ export const GymProvider = ({ children }) => {
         removeToast,
         login,
         logout,
-        switchRole,
         hasPermission,
         can,
         createRole,
@@ -577,6 +570,7 @@ export const GymProvider = ({ children }) => {
         createUser,
         updateUser,
         deleteUser,
+        registerUser,
         changePassword,
         createClass,
         updateClass,
@@ -592,8 +586,7 @@ export const GymProvider = ({ children }) => {
         renewSubscription,
         cancelSubscription,
         createSubscription,
-        updateSubscription,
-        resetDemoData
+        updateSubscription
       }}
     >
       {children}

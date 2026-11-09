@@ -6,7 +6,7 @@ import { validateUserForm } from '../../utils/validators.js';
 import { Dumbbell, ArrowLeft } from 'lucide-react';
 
 export const RegisterPage = () => {
-  const { setCurrentView, preselectedPlanId, users, plans, roles, createUser, login, addToast } = useGym();
+  const { setCurrentView, preselectedPlanId, users, plans, roles, registerUser } = useGym();
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -62,7 +62,7 @@ export const RegisterPage = () => {
     }
 
     setIsSubmitting(true);
-    const result = createUser(formData);
+    const result = registerUser(formData);
 
     if (!result.success) {
       setGeneralError(result.error);
@@ -70,9 +70,6 @@ export const RegisterPage = () => {
       return;
     }
 
-    addToast('success', `¡Bienvenido a KRONOFIT, ${formData.nombre}! Tu cuenta ha sido activada.`);
-    login(result.user);
-    setCurrentView('alumno-clases');
   };
 
   return (

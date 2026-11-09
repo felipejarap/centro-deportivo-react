@@ -7,7 +7,7 @@ import { validateLoginForm } from '../../utils/validators.js';
 import { Mail, Lock, LogIn, Dumbbell, AlertCircle } from 'lucide-react';
 
 export const LoginPage = () => {
-  const { login, switchRole, setCurrentView } = useGym();
+  const { login, setCurrentView } = useGym();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -27,12 +27,8 @@ export const LoginPage = () => {
 
     const success = login(email, password);
     if (!success) {
-      setGeneralError('Correo o contraseña incorrectos. Puedes utilizar un acceso rápido demo abajo.');
+      setGeneralError('Correo o contraseña incorrectos, o cuenta inactiva.');
     }
-  };
-
-  const handleQuickDemo = roleId => {
-    switchRole(roleId);
   };
 
   return (
@@ -79,7 +75,7 @@ export const LoginPage = () => {
               </div>
             </FormField>
 
-            <FormField label="Contraseña" error={errors.password} required helperText="Demo: password123">
+            <FormField label="Contraseña" error={errors.password} required>
               <div className="relative">
                 <Lock className="w-4 h-4 text-neutral-500 absolute left-3 top-3 pointer-events-none" />
                 <input
@@ -121,37 +117,18 @@ export const LoginPage = () => {
           </div>
         </Card>
 
-        {/* Quick Demo Access Bar */}
-        <div className="bg-neutral-900/30 border border-neutral-800/80 rounded-xl p-4 space-y-3">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 text-center">
-            Accesos Rápidos Demo (1 Clic)
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-4 space-y-3">
+          <p className="text-center text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+            Cuentas de prueba
+          </p>
+          <div className="grid gap-2 text-xs text-neutral-300 sm:grid-cols-3">
+            <p><span className="block text-neutral-500">Administrador</span>admin@kronofit.com</p>
+            <p><span className="block text-neutral-500">Profesor</span>carlos.rivera@kronofit.com</p>
+            <p><span className="block text-neutral-500">Alumno</span>camila.soto@gmail.com</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('alumno')}
-              className="px-3 py-2 bg-neutral-900 border border-neutral-800 hover:border-amber-500/50 rounded-lg text-left text-xs transition-colors cursor-pointer group"
-            >
-              <div className="font-semibold text-neutral-200 group-hover:text-amber-400">Alumno</div>
-              <div className="text-[10px] text-neutral-500">Camila Soto</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('profesor')}
-              className="px-3 py-2 bg-neutral-900 border border-neutral-800 hover:border-amber-500/50 rounded-lg text-left text-xs transition-colors cursor-pointer group"
-            >
-              <div className="font-semibold text-neutral-200 group-hover:text-amber-400">Profesor</div>
-              <div className="text-[10px] text-neutral-500">Carlos Rivera</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('admin')}
-              className="px-3 py-2 bg-neutral-900 border border-neutral-800 hover:border-amber-500/50 rounded-lg text-left text-xs transition-colors cursor-pointer group"
-            >
-              <div className="font-semibold text-neutral-200 group-hover:text-amber-400">Administrador</div>
-              <div className="text-[10px] text-neutral-500">Valeria Montes</div>
-            </button>
-          </div>
+          <p className="text-center text-xs text-neutral-400">
+            Contraseña para las tres cuentas: <code className="text-amber-400">password123</code>
+          </p>
         </div>
       </div>
     </div>
