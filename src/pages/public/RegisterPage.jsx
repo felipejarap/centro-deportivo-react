@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGym } from '../../context/GymContext.jsx';
-import { UserForm, Card } from '../../components/common/index.js';
+import { UserForm } from '../../components/UserForm.jsx';
+import { Card } from '../../components/Card.jsx';
 import { validateUserForm } from '../../utils/validators.js';
 import { Dumbbell, ArrowLeft } from 'lucide-react';
 

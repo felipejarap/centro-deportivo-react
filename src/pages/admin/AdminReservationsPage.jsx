@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { useGym } from '../../context/GymContext.jsx';
-import {
-  PageHeader,
-  FilterBar,
-  Badge,
-  Button
-} from '../../components/common/index.js';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { PageHeader } from '../../components/PageHeader.jsx';
+import { FilterBar } from '../../components/FilterBar.jsx';
+import { Badge } from '../../components/Badge.jsx';
+import { CheckCircle2 } from 'lucide-react';
 
 export const AdminReservationsPage = () => {
   const {

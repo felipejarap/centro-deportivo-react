@@ -45,4 +45,3 @@ export const ConfirmModal = ({
     </div>
   );
 };
-export { ConfirmModal } from './ConfirmModal.jsx';

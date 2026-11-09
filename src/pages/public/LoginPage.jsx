@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useGym } from '../../context/GymContext.jsx';
-import { Button, FormField, Card } from '../../components/common/index.js';
+import { Button } from '../../components/Button.jsx';
+import { FormField } from '../../components/FormField.jsx';
+import { Card } from '../../components/Card.jsx';
 import { validateLoginForm } from '../../utils/validators.js';
 import { Mail, Lock, LogIn, Dumbbell, AlertCircle } from 'lucide-react';
 

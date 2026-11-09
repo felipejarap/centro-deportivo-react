@@ -33,4 +33,3 @@ export const PageHeader = ({
     </div>
   );
 };
-export { PageHeader } from './PageHeader.jsx';

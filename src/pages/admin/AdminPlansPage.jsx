@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { useGym } from '../../context/GymContext.jsx';
-import {
-  PageHeader,
-  Modal,
-  ConfirmModal,
-  Button,
-  Badge,
-  FormField,
-  Card
-} from '../../components/common/index.js';
+import { PageHeader } from '../../components/PageHeader.jsx';
+import { Modal } from '../../components/Modal.jsx';
+import { ConfirmModal } from '../../components/ConfirmModal.jsx';
+import { Button } from '../../components/Button.jsx';
+import { Badge } from '../../components/Badge.jsx';
+import { FormField } from '../../components/FormField.jsx';
 import {
   CreditCard,
   Plus,

@@ -332,4 +332,3 @@ export const UserForm = ({
     </form>
   );
 };
-export { UserForm } from './UserForm.jsx';

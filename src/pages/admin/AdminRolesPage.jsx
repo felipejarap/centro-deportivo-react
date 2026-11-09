@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { useGym } from '../../context/GymContext.jsx';
-import {
-  PageHeader,
-  FilterBar,
-  Modal,
-  ConfirmModal,
-  Badge,
-  Button,
-  FormField
-} from '../../components/common/index.js';
-import { PermissionsMatrix, SYSTEM_MODULES, getPermissionId } from '../../components/roles/PermissionsMatrix.jsx';
+import { PageHeader } from '../../components/PageHeader.jsx';
+import { FilterBar } from '../../components/FilterBar.jsx';
+import { Modal } from '../../components/Modal.jsx';
+import { ConfirmModal } from '../../components/ConfirmModal.jsx';
+import { Badge } from '../../components/Badge.jsx';
+import { Button } from '../../components/Button.jsx';
+import { FormField } from '../../components/FormField.jsx';
+import { PermissionsMatrix, getPermissionId } from '../../components/PermissionsMatrix.jsx';
 import { validateRoleForm } from '../../utils/validators.js';
 import {
   Shield,
