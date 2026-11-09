@@ -48,3 +48,4 @@ export const Button = ({
     </button>
   );
 };
+export { Button } from './Button.jsx';

@@ -59,3 +59,4 @@ export const Modal = ({
     </div>
   );
 };
+export { Modal } from './Modal.jsx';

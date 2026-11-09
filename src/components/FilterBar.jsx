@@ -33,3 +33,4 @@ export const FilterBar = ({
     </div>
   );
 };
+export { FilterBar } from './FilterBar.jsx';
