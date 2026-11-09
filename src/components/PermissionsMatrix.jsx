@@ -57,7 +57,7 @@ export const PermissionsMatrix = ({
 }) => {
   return (
     <div className="overflow-x-auto rounded-xl border border-neutral-800 shadow-inner bg-neutral-900/30">
-      <table className="w-full text-left text-xs border-collapse">
+      <table className="w-full min-w-[640px] text-left text-xs border-collapse">
         <thead className={compact ? 'sticky top-0 z-10' : ''}>
           <tr className="border-b border-neutral-800 bg-neutral-950/90 text-neutral-400 font-bold uppercase tracking-wider text-[11px]">
             <th className="py-3 px-4 w-5/12">Módulo del Sistema</th>

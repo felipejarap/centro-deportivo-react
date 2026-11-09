@@ -578,7 +578,7 @@ export const AdminRolesPage = () => {
               <p className="text-[11px] text-rose-400">{formErrors.permisos}</p>
             )}
 
-            <div className="max-h-80 overflow-y-auto pr-1">
+            <div className="max-h-[min(20rem,38vh)] overflow-y-auto pr-1 rounded-xl">
               <PermissionsMatrix
                 compact={true}
                 selectedPermissions={formData.permisos}

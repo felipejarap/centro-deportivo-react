@@ -34,7 +34,7 @@ export const Modal = ({
   return (
     <div className="fixed inset-0 z-50 bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
       <div
-        className={`bg-neutral-900 border border-neutral-800 rounded-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl my-8 relative animate-fadeIn ${maxWidthClasses}`}
+        className={`bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl my-8 relative animate-fadeIn ${maxWidthClasses}`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
