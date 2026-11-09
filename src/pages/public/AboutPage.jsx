@@ -38,7 +38,7 @@ export const AboutPage = () => {
 
         <div className="relative rounded-2xl overflow-hidden border border-neutral-800 shadow-2xl aspect-[4/3]">
           <img
-            src="/src/assets/images/hero_gym_modern_1794172172469.jpg"
+            src="/src/assets/hero_gym_modern_1794172172469.jpg"
             alt="Instalaciones KRONOFIT"
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover"

@@ -1,3 +1,9 @@
+import classFunctionalImage from '../assets/class_functional_1794172184894.jpg';
+import classWellnessImage from '../assets/class_wellness_1794172196807.jpg';
+import heroGymImage from '../assets/hero_gym_modern_1794172172469.jpg';
+
+export { classFunctionalImage, classWellnessImage, heroGymImage };
+
 export const SYSTEM_PERMISSIONS = [
   // Módulo Usuarios
   { id: 'usuarios:ver', accion: 'ver', modulo: 'Usuarios', nombre: 'Ver Usuarios', descripcion: 'Visualizar lista y datos de usuarios' },
@@ -208,7 +214,7 @@ export const INITIAL_CLASSES = [
     horaFin: '08:00',
     cupoMaximo: 16,
     cupoDisponible: 13,
-    imagen: '/src/assets/images/class_functional_1794172184894.jpg',
+    imagen: classFunctionalImage,
     estado: 'activa'
   },
   {
@@ -226,7 +232,7 @@ export const INITIAL_CLASSES = [
     horaFin: '19:30',
     cupoMaximo: 12,
     cupoDisponible: 10,
-    imagen: '/src/assets/images/hero_gym_modern_1794172172469.jpg',
+    imagen: heroGymImage,
     estado: 'activa'
   },
   {
@@ -244,7 +250,7 @@ export const INITIAL_CLASSES = [
     horaFin: '10:00',
     cupoMaximo: 20,
     cupoDisponible: 17,
-    imagen: '/src/assets/images/class_wellness_1794172196807.jpg',
+    imagen: classWellnessImage,
     estado: 'activa'
   },
   {
@@ -262,7 +268,7 @@ export const INITIAL_CLASSES = [
     horaFin: '20:00',
     cupoMaximo: 18,
     cupoDisponible: 16,
-    imagen: '/src/assets/images/class_functional_1794172184894.jpg',
+    imagen: classFunctionalImage,
     estado: 'activa'
   },
   {
@@ -280,7 +286,7 @@ export const INITIAL_CLASSES = [
     horaFin: '11:30',
     cupoMaximo: 14,
     cupoDisponible: 11,
-    imagen: '/src/assets/images/class_wellness_1794172196807.jpg',
+    imagen: classWellnessImage,
     estado: 'activa'
   }
 ];
