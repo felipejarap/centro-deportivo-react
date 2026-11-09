@@ -24,3 +24,4 @@ export const Badge = ({
     </span>
   );
 };
+export { Badge } from './Badge.jsx';

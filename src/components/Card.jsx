@@ -19,3 +19,4 @@ export const Card = ({
     </div>
   );
 };
+export { Card } from './Card.jsx';
