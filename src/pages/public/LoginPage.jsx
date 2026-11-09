@@ -121,10 +121,10 @@ export const LoginPage = () => {
           <p className="text-center text-[11px] font-bold uppercase tracking-wider text-neutral-400">
             Cuentas de prueba
           </p>
-          <div className="grid gap-2 text-xs text-neutral-300 sm:grid-cols-3">
-            <p><span className="block text-neutral-500">Administrador</span>admin@kronofit.com</p>
-            <p><span className="block text-neutral-500">Profesor</span>carlos.rivera@kronofit.com</p>
-            <p><span className="block text-neutral-500">Alumno</span>camila.soto@gmail.com</p>
+          <div className="grid gap-x-4 gap-y-3 text-xs text-neutral-300 sm:grid-cols-3">
+            <p className="min-w-0 break-all"><span className="block break-normal text-neutral-500">Administrador</span>admin@kronofit.com</p>
+            <p className="min-w-0 break-all"><span className="block break-normal text-neutral-500">Profesor</span>carlos.rivera@kronofit.com</p>
+            <p className="min-w-0 break-all"><span className="block break-normal text-neutral-500">Alumno</span>camila.soto@gmail.com</p>
           </div>
           <p className="text-center text-xs text-neutral-400">
             Contraseña para las tres cuentas: <code className="text-amber-400">password123</code>
