@@ -173,7 +173,7 @@ export const AdminSubscriptionsPage = () => {
                     </td>
 
                     <td className="py-3.5 px-4 font-mono text-neutral-200">
-                      ${sub.monto.toLocaleString('es-CL')}
+                      ${(sub.precio ?? sub.monto ?? 0).toLocaleString('es-CL')}
                     </td>
 
                     <td className="py-3.5 px-4 text-neutral-300">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useGym } from '../context/GymContext.jsx';
 import { User as UserIcon, LogOut, ChevronDown, Dumbbell } from 'lucide-react';
 
@@ -8,11 +8,7 @@ export const Navbar = () => {
     currentView,
     setCurrentView,
     logout,
-    switchRole,
-    setViewingProfileUserId,
-    resetDemoData,
-    roles,
-    can
+    setViewingProfileUserId
   } = useGym();
 
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
@@ -31,49 +27,6 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-neutral-950/90 backdrop-blur-md border-b border-neutral-900">
-      {/* Demo helper banner to easily test all requested pages and roles */}
-      <div className="bg-neutral-900/70 border-b border-neutral-800/60 px-4 py-1.5 text-[11px] text-neutral-400 flex items-center justify-between">
-        <div className="flex items-center gap-2 overflow-x-auto py-0.5">
-          <span className="text-neutral-500 font-medium whitespace-nowrap">Simulador de Roles:</span>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => switchRole('invitado')}
-              className={`px-2 py-0.5 rounded transition-colors whitespace-nowrap cursor-pointer ${
-                !currentUser ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30' : 'hover:text-neutral-200'
-              }`}
-            >
-              Invitado (Público)
-            </button>
-            <span className="text-neutral-700">·</span>
-            {roles.map((r, idx) => {
-              const isSelected = currentUser?.rol === r.id;
-              return (
-                <React.Fragment key={r.id}>
-                  {idx > 0 && <span className="text-neutral-700">·</span>}
-                  <button
-                    onClick={() => switchRole(r.id)}
-                    className={`px-2 py-0.5 rounded transition-colors whitespace-nowrap cursor-pointer ${
-                      isSelected ? 'bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30' : 'hover:text-neutral-200'
-                    }`}
-                  >
-                    {r.nombre}
-                  </button>
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </div>
-
-        <button
-          onClick={resetDemoData}
-          className="text-[11px] text-neutral-500 hover:text-amber-400 transition-colors whitespace-nowrap hidden sm:inline-block cursor-pointer"
-          title="Restablecer datos originales"
-        >
-          Reiniciar Datos
-        </button>
-      </div>
-
-      {/* Main Top Bar fulfilling 3-zone contract */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
         {/* Zone 1: Brand wordmark in display face */}
         <div
@@ -295,25 +248,6 @@ export const Navbar = () => {
                     <UserIcon className="w-3.5 h-3.5 text-neutral-400" />
                     Mi Perfil
                   </button>
-
-                  {/* Quick role jump */}
-                  <div className="my-1 border-t border-neutral-800 pt-1">
-                    <div className="px-3.5 py-1 text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
-                      Cambiar de Rol
-                    </div>
-                    {roles.map(r => (
-                      <button
-                        key={r.id}
-                        onClick={() => switchRole(r.id)}
-                        className={`w-full text-left px-3.5 py-1.5 text-xs flex items-center justify-between cursor-pointer ${
-                          currentUser.rol === r.id ? 'text-amber-400 bg-amber-500/10 font-medium' : 'text-neutral-400 hover:bg-neutral-800'
-                        }`}
-                      >
-                        <span>{r.nombre}</span>
-                        {currentUser.rol === r.id && <span className="text-[10px]">Activo</span>}
-                      </button>
-                    ))}
-                  </div>
 
                   <div className="border-t border-neutral-800 mt-1 pt-1">
                     <button
