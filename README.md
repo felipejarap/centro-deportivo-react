@@ -1,35 +1,101 @@
-# 🏋️‍♂️ Centro Deportivo Kronofit - Frontend (React + Vite)
+# Centro Deportivo KRONOFIT
 
-Este proyecto corresponde a la interfaz frontend desarrollada en **React** y **Vite** para la plataforma de gestión del centro deportivo **Kronofit**.
+Aplicacion web frontend para administrar un centro deportivo: usuarios, roles, clases, reservas, planes y suscripciones.
 
----
+El proyecto esta construido con React y Vite. La interfaz utiliza clases utilitarias de Tailwind CSS y los datos de demostracion se guardan en `localStorage`.
 
-## 🛠️ Requisitos Previos
+## Requisitos
 
-Para ejecutar este proyecto de forma local, necesitas tener instalado Node.js y su gestor de paquetes npm. El proyecto ha sido configurado y verificado utilizando las siguientes versiones:
+- Node.js 20 o superior
+- npm
 
-- **Node.js:** v26.13.0 (o superior)
-- **npm:** v11.20.0
-- **Bootstrap:** 5.3.8
-- **React:** 19.3.1
-- **Vite:** 8.3.5
+## Instalacion
 
----
+Desde la carpeta del proyecto:
 
-## 📐 Arquitectura y Decisiones de Diseño
+```bash
+npm install
+```
 
-1. **Estructura Modular por Dominios:**
-   - **`data/`:** Datos JSON base (`planes.json`, `tiposClases.json`) para simular las respuestas iniciales de los microservicios.
-   - **`pages/planes/`:** Gestión del catálogo de ofertas y planes comerciales.
-   - **`pages/clases/` y `pages/tiposClases/`:** Gestión de programación de clases y categorías.
+## Ejecutar la aplicacion
 
-2. **Diseño de Interfaz y UI Responsiva:**
-   - Uso intensivo de **Bootstrap 5** para lograr una interfaz adaptable a dispositivos móviles y escritorio.
-   - Componentes responsivos con validaciones en tiempo real para creación, edición y eliminación (CRUD).
-   - Identificación visual de ofertas mediante insignias dinámicas (*"Más Popular"*).
+```bash
+npm run dev
+```
 
-3. **Gestión de Estado y Persistencia:**
-   - Manejo de estado local mediante `useState` y `useEffect`.
-   - Persistencia de datos en `localStorage` para garantizar la continuidad de la información en el navegador mientras se integra la API Gateway REST.
+Vite mostrara en la terminal la URL local, normalmente `http://localhost:5173`.
 
----
+Para crear una compilacion de produccion:
+
+```bash
+npm run build
+```
+
+## Cuentas de demostracion
+
+Todas usan la contraseña `password123`:
+
+| Rol           | Correo                         |
+| ------------- | ------------------------------ |
+| Administrador | `admin@kronofit.com`         |
+| Profesor      | `carlos.rivera@kronofit.com` |
+| Alumno        | `camila.soto@gmail.com`      |
+
+## Estructura principal
+
+```text
+src/
+  components/       Componentes reutilizables de la interfaz
+  context/          Estado global y persistencia de la aplicacion
+  data/             Datos iniciales de demostracion
+  pages/            Vistas publicas y paneles por rol
+  utils/            Validadores y funciones auxiliares
+tests/
+  validators.test.js Pruebas de validacion con Vitest
+  karma/              Pruebas Jasmine/Karma de validadores y componentes
+```
+
+## Pruebas
+
+El proyecto tiene dos suites:
+
+### Vitest
+
+Ejecuta las pruebas de validadores. Actualmente contiene 20 pruebas.
+
+```bash
+npm run test:run
+```
+
+### Jasmine y Karma
+
+Ejecuta las pruebas en `jsdom`. Incluye 20 pruebas unitarias de validadores y 10 pruebas directas de componentes React usando React Testing Library.
+
+```bash
+npm run test:karma
+```
+
+Esta suite usa los mocks de `tests/karma/mocks/` y la configuracion de `karma.conf.cjs`.
+
+Karma genera los reportes en `coverage/karma/`:
+
+- `coverage/karma/html/`: reporte HTML navegable.
+- `coverage/karma/lcov.info`: reporte LCOV.
+- Resumen de porcentajes en la terminal.
+
+### Ejecutar todas las pruebas
+
+```bash
+npm run test:all
+```
+
+El ultimo resultado validado fue:
+
+```text
+Vitest: 20 pruebas exitosas
+Jasmine/Karma: 30 pruebas exitosas
+Statements: 90.47%
+Lines: 90.36%
+Branches: 81.65%
+Functions: 85.71%
+```
