@@ -6,7 +6,10 @@ import {
   INITIAL_RESERVATIONS,
   INITIAL_SUBSCRIPTIONS,
   INITIAL_ROLES,
-  SYSTEM_PERMISSIONS
+  SYSTEM_PERMISSIONS,
+  classFunctionalImage,
+  classWellnessImage,
+  heroGymImage
 } from '../data/initialData.js';
 
 const GymContext = createContext(undefined);
@@ -23,7 +26,20 @@ export const GymProvider = ({ children }) => {
 
   const [roles, setRoles] = useState(() => loadStored('roles', INITIAL_ROLES));
   const [users, setUsers] = useState(() => loadStored('users', INITIAL_USERS));
-  const [classes, setClasses] = useState(() => loadStored('classes', INITIAL_CLASSES));
+  const [classes, setClasses] = useState(() => {
+    const storedClasses = loadStored('classes', INITIAL_CLASSES);
+    const imageByFilename = {
+      'class_functional_1794172184894.jpg': classFunctionalImage,
+      'class_wellness_1794172196807.jpg': classWellnessImage,
+      'hero_gym_modern_1794172172469.jpg': heroGymImage
+    };
+
+    return storedClasses.map(gymClass => {
+      const filename = gymClass.imagen?.split('/').pop();
+      const image = imageByFilename[filename];
+      return image ? { ...gymClass, imagen: image } : gymClass;
+    });
+  });
   const [plans, setPlans] = useState(() => loadStored('plans', INITIAL_PLANS));
   const [reservations, setReservations] = useState(() => loadStored('reservations', INITIAL_RESERVATIONS));
   const [subscriptions, setSubscriptions] = useState(() => loadStored('subscriptions', INITIAL_SUBSCRIPTIONS));
@@ -313,7 +329,7 @@ export const GymProvider = ({ children }) => {
       horaFin: classData.horaFin || '09:00',
       cupoMaximo: Number(classData.cupoMaximo) || 16,
       cupoDisponible: Number(classData.cupoMaximo) || 16,
-      imagen: classData.imagen || '/src/assets/images/class_functional_1794172184894.jpg',
+      imagen: classData.imagen || classFunctionalImage,
       estado: classData.estado || 'activa'
     };
     setClasses(prev => [newClass, ...prev]);

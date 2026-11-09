@@ -16,7 +16,7 @@ export const HomePage = () => {
       <section className="relative min-h-[580px] lg:min-h-[640px] flex items-center overflow-hidden border-b border-neutral-900">
         <div className="absolute inset-0 z-0">
           <img
-            src="/src/assets/images/hero_gym_modern_1794172172469.jpg"
+            src="/src/assets/hero_gym_modern_1794172172469.jpg"
             alt="Instalaciones de alto estándar KRONOFIT"
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover object-center"
@@ -122,7 +122,7 @@ export const HomePage = () => {
           <div className="group rounded-xl border border-neutral-800 bg-neutral-900/40 overflow-hidden flex flex-col transition-all hover:border-neutral-700">
             <div className="relative aspect-[16/10] overflow-hidden bg-neutral-900">
               <img
-                src="/src/assets/images/class_functional_1794172184894.jpg"
+                src="/src/assets/class_functional_1794172184894.jpg"
                 alt="Clase funcional y crossfit"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -150,7 +150,7 @@ export const HomePage = () => {
           <div className="group rounded-xl border border-neutral-800 bg-neutral-900/40 overflow-hidden flex flex-col transition-all hover:border-neutral-700">
             <div className="relative aspect-[16/10] overflow-hidden bg-neutral-900">
               <img
-                src="/src/assets/images/class_wellness_1794172196807.jpg"
+                src="/src/assets/class_wellness_1794172196807.jpg"
                 alt="Clase de yoga y movilidad"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

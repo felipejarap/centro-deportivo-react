@@ -7,6 +7,7 @@ import { ConfirmModal } from '../../components/ConfirmModal.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Badge } from '../../components/Badge.jsx';
 import { FormField } from '../../components/FormField.jsx';
+import { classFunctionalImage } from '../../data/initialData.js';
 import {
   Calendar,
   Plus,
@@ -33,7 +34,7 @@ export const AdminClassesPage = () => {
     sala: 'Box Principal (Piso 1)',
     horario: 'Lunes y Miércoles 08:00 - 09:00',
     cupoMaximo: 16,
-    imagen: '/src/assets/images/class_functional_1794172184894.jpg',
+    imagen: classFunctionalImage,
     estado: 'activa'
   });
 
@@ -57,7 +58,7 @@ export const AdminClassesPage = () => {
       sala: 'Box Principal (Piso 1)',
       horario: 'Lunes y Miércoles 08:00 - 09:00',
       cupoMaximo: 16,
-      imagen: '/src/assets/images/class_functional_1794172184894.jpg',
+      imagen: classFunctionalImage,
       estado: 'activa'
     });
     setErrors({});
