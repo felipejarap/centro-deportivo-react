@@ -1,71 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
-  INITIAL_USERS,
   INITIAL_CLASSES,
   INITIAL_PLANS,
-  INITIAL_RESERVATIONS,
-  INITIAL_SUBSCRIPTIONS,
   INITIAL_ROLES,
   SYSTEM_PERMISSIONS,
-  classFunctionalImage,
-  classWellnessImage,
-  heroGymImage
 } from '../data/initialData.js';
+import { apiDelete, apiGet, apiPost, apiPut } from '../services/api.js';
+import { mapClass, mapPlan, mapReservation, mapRole, mapSubscription, mapUser } from '../services/gymMappers.js';
 
 const GymContext = createContext(undefined);
-const AUTH_SESSION_VERSION = '2';
-const INITIAL_DATA_VERSION = '2';
 
 export const GymProvider = ({ children }) => {
-  const loadStored = (key, fallback) => {
-    try {
-      const item = localStorage.getItem(`kronofit_${key}`);
-      return item ? JSON.parse(item) : fallback;
-    } catch {
-      return fallback;
-    }
-  };
-
-  const loadSeeded = (key, fallback) => {
-    const versionKey = `kronofit_${key}_seed_version`;
-    if (localStorage.getItem(versionKey) !== INITIAL_DATA_VERSION) {
-      localStorage.setItem(versionKey, INITIAL_DATA_VERSION);
-      return fallback;
-    }
-    return loadStored(key, fallback);
-  };
-
-  const [roles, setRoles] = useState(() => loadStored('roles', INITIAL_ROLES));
-  const [users, setUsers] = useState(() => loadStored('users', INITIAL_USERS));
-  const [classes, setClasses] = useState(() => {
-    const storedClasses = loadStored('classes', INITIAL_CLASSES);
-    const imageByFilename = {
-      'class_functional_1794172184894.jpg': classFunctionalImage,
-      'class_wellness_1794172196807.jpg': classWellnessImage,
-      'hero_gym_modern_1794172172469.jpg': heroGymImage
-    };
-
-    return storedClasses.map(gymClass => {
-      const filename = gymClass.imagen?.split('/').pop();
-      const image = imageByFilename[filename];
-      return image ? { ...gymClass, imagen: image } : gymClass;
-    });
-  });
-  const [plans, setPlans] = useState(() => loadStored('plans', INITIAL_PLANS));
-  const [reservations, setReservations] = useState(() => loadSeeded('reservations', INITIAL_RESERVATIONS));
-  const [subscriptions, setSubscriptions] = useState(() => loadSeeded('subscriptions', INITIAL_SUBSCRIPTIONS));
-
-  const [currentUser, setCurrentUser] = useState(() => {
-    if (localStorage.getItem('kronofit_auth_version') !== AUTH_SESSION_VERSION) {
-      localStorage.removeItem('kronofit_current_user_id');
-      localStorage.setItem('kronofit_auth_version', AUTH_SESSION_VERSION);
-      return null;
-    }
-
-    const savedUserId = localStorage.getItem('kronofit_current_user_id');
-    if (savedUserId === 'guest') return null;
-    return users.find(u => u.id === savedUserId && u.estado === 'activo') || null;
-  });
+  const [roles, setRoles] = useState(INITIAL_ROLES);
+  const [users, setUsers] = useState([]);
+  const [classes, setClasses] = useState(INITIAL_CLASSES);
+  const [plans, setPlans] = useState(INITIAL_PLANS);
+  const [reservations, setReservations] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [currentView, setCurrentView] = useState(() => {
     if (currentUser?.rol === 'admin') return 'admin-usuarios';
@@ -78,51 +30,107 @@ export const GymProvider = ({ children }) => {
   const [preselectedPlanId, setPreselectedPlanId] = useState(null);
   const [toasts, setToasts] = useState([]);
 
-  // LocalStorage synchronization with kronofit key
-  useEffect(() => {
-    localStorage.setItem('kronofit_roles', JSON.stringify(roles));
-  }, [roles]);
-
-  useEffect(() => {
-    localStorage.setItem('kronofit_users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('kronofit_classes', JSON.stringify(classes));
-  }, [classes]);
-
-  useEffect(() => {
-    localStorage.setItem('kronofit_plans', JSON.stringify(plans));
-  }, [plans]);
-
-  useEffect(() => {
-    localStorage.setItem('kronofit_reservations', JSON.stringify(reservations));
-  }, [reservations]);
-
-  useEffect(() => {
-    localStorage.setItem('kronofit_subscriptions', JSON.stringify(subscriptions));
-  }, [subscriptions]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('kronofit_current_user_id', currentUser.id);
-    } else {
-      localStorage.setItem('kronofit_current_user_id', 'guest');
-    }
-  }, [currentUser]);
-
-  // Toast Notifications
-  const addToast = (tipo, mensaje) => {
+  function addToast(tipo, mensaje) {
     const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
     setToasts(prev => [...prev, { id, tipo, mensaje }]);
-    setTimeout(() => {
-      removeToast(id);
-    }, 4000);
-  };
+    setTimeout(() => removeToast(id), 4000);
+  }
 
-  const removeToast = id => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  };
+  function removeToast(id) {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }
+
+  useEffect(() => {
+    localStorage.removeItem('kronofit_users');
+    localStorage.removeItem('kronofit_current_user_id');
+    const savedUserId = localStorage.getItem('kronofit_user_id');
+
+    const loadPublicData = async () => {
+      try {
+        const [backendRoles, backendClasses, backendPlans] = await Promise.all([
+          apiGet('/type-users'),
+          apiGet('/classes'),
+          apiGet('/plans')
+        ]);
+        setRoles(backendRoles.map(role => {
+          const mappedRole = mapRole(role);
+          const defaultRole = INITIAL_ROLES.find(item => item.id === mappedRole.id);
+          return {
+            ...defaultRole,
+            ...mappedRole,
+            permisos: role.permissions?.length ? role.permissions : defaultRole?.permisos || []
+          };
+        }));
+        setClasses(backendClasses.map(mapClass));
+        setPlans(backendPlans.map(mapPlan));
+        return { classes: backendClasses.map(mapClass), plans: backendPlans.map(mapPlan) };
+      } catch (error) {
+        addToast('error', `No se pudieron cargar los datos del centro: ${error.message}`);
+        return null;
+      }
+    };
+
+    const restoreSession = async publicData => {
+      if (!localStorage.getItem('token') || !savedUserId) return;
+      let user;
+      try {
+        user = mapUser(await apiGet(`/users/${savedUserId}`));
+      } catch (error) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('kronofit_user_id');
+        addToast('error', `No se pudo restaurar la sesión: ${error.message}`);
+        return;
+      }
+
+      setCurrentUser(user);
+      setCurrentView(user.rol === 'admin' ? 'admin-usuarios' : user.rol === 'profesor' ? 'profesor-clases' : 'alumno-clases');
+      try {
+        const requests = user.rol === 'admin'
+          ? [apiGet('/users'), apiGet('/reservations'), apiGet('/subscriptions')]
+          : user.rol === 'alumno'
+            ? [null, apiGet(`/reservations/by-user/${user.id}`), apiGet(`/subscriptions/by-user/${user.id}`)]
+            : [null, apiGet(`/reservations/by-coach/${user.id}`), null];
+        const [backendUsers, backendReservations, backendSubscriptions] = await Promise.all(
+          requests.map(request => request || Promise.resolve([]))
+        );
+        const mappedUsers = backendUsers.length ? backendUsers.map(mapUser) : [user];
+        setUsers(mappedUsers);
+        if (backendReservations) {
+          setReservations(backendReservations.map(item => mapReservation(item, publicData?.classes || [], mappedUsers)));
+          if (user.rol === 'profesor') {
+            setUsers(prev => [
+              ...prev,
+              ...backendReservations.map(item => item.user ? mapUser(item.user) : null)
+                .filter(item => item && item.id !== user.id)
+            ]);
+          }
+        }
+        if (backendSubscriptions) {
+          setSubscriptions(backendSubscriptions.map(item => mapSubscription(item, mappedUsers, publicData?.plans || [])));
+        }
+      } catch (error) {
+        addToast('error', `No se pudieron cargar tus datos: ${error.message}`);
+      }
+    };
+
+    const initialize = async () => {
+      await restoreSession(await loadPublicData());
+    };
+    initialize();
+  }, []);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setCurrentUser(null);
+      setUsers([]);
+      setReservations([]);
+      setSubscriptions([]);
+      setCurrentView('login');
+      addToast('error', 'La sesión expiró. Inicia sesión nuevamente.');
+    };
+    window.addEventListener('kronofit:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('kronofit:unauthorized', handleUnauthorized);
+  }, []);
 
   // Permission Verification
   const hasPermission = permissionId => {
@@ -135,7 +143,7 @@ export const GymProvider = ({ children }) => {
   const can = hasPermission;
 
   // Roles CRUD
-  const createRole = roleData => {
+  const createRole = async roleData => {
     if (!roleData.nombre || !roleData.nombre.trim()) {
       return { success: false, error: 'El nombre del rol es obligatorio.' };
     }
@@ -150,49 +158,63 @@ export const GymProvider = ({ children }) => {
       return { success: false, error: 'Identificador de rol inválido.' };
     }
 
-    const existing = roles.some(r => r.id === slug);
+    const existing = roles.some(r => r.id === slug || r.nombre.toLowerCase() === roleData.nombre.trim().toLowerCase());
     if (existing) {
       return { success: false, error: `Ya existe un rol con el identificador "${slug}".` };
     }
 
-    const newRole = {
-      id: slug,
-      nombre: roleData.nombre.trim(),
-      descripcion: roleData.descripcion ? roleData.descripcion.trim() : 'Rol configurado en el mantenedor.',
-      permisos: Array.isArray(roleData.permisos) ? roleData.permisos : [],
-      esSistema: false
-    };
+    try {
+      const saved = await apiPost('/type-users', {
+        name: roleData.nombre.trim(),
+        description: roleData.descripcion || '',
+        permissions: roleData.permisos || []
+      });
+      const newRole = {
+        ...mapRole(saved),
+        id: slug,
+        descripcion: roleData.descripcion || '',
+        permisos: Array.isArray(roleData.permisos) ? roleData.permisos : [],
+        esSistema: false
+      };
 
-    setRoles(prev => [...prev, newRole]);
-    addToast('success', `Rol "${newRole.nombre}" creado exitosamente.`);
-    return { success: true, role: newRole };
+      setRoles(prev => [...prev, newRole]);
+      addToast('success', `Rol "${newRole.nombre}" creado exitosamente.`);
+      return { success: true, role: newRole };
+    } catch (error) {
+      addToast('error', `No se pudo crear el rol: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   };
 
-  const updateRole = (id, roleData) => {
+  const updateRole = async (id, roleData) => {
     const target = roles.find(r => r.id === id);
     if (!target) {
       return { success: false, error: 'Rol no encontrado.' };
     }
 
-    setRoles(prev =>
-      prev.map(r => {
-        if (r.id === id) {
-          return {
-            ...r,
-            nombre: roleData.nombre ? roleData.nombre.trim() : r.nombre,
-            descripcion: roleData.descripcion !== undefined ? roleData.descripcion.trim() : r.descripcion,
-            permisos: Array.isArray(roleData.permisos) ? roleData.permisos : r.permisos
-          };
-        }
-        return r;
-      })
-    );
+    if (!target.backendId) return { success: false, error: 'El rol todavía no está sincronizado con el servidor.' };
 
-    addToast('success', `Permisos del rol "${roleData.nombre || target.nombre}" actualizados.`);
-    return { success: true };
+    try {
+      const saved = await apiPut(`/type-users/${target.backendId}`, {
+        name: roleData.nombre ? roleData.nombre.trim() : target.nombre,
+        description: roleData.descripcion !== undefined ? roleData.descripcion.trim() : target.descripcion,
+        permissions: Array.isArray(roleData.permisos) ? roleData.permisos : target.permisos
+      });
+      setRoles(prev => prev.map(r => r.id === id ? {
+        ...r,
+        nombre: saved.name,
+        descripcion: saved.description || '',
+        permisos: saved.permissions || roleData.permisos || r.permisos
+      } : r));
+      addToast('success', `Permisos del rol "${roleData.nombre || target.nombre}" actualizados.`);
+      return { success: true };
+    } catch (error) {
+      addToast('error', `No se pudo actualizar el rol: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   };
 
-  const deleteRole = id => {
+  const deleteRole = async id => {
     if (id === 'admin') {
       addToast('error', 'El rol de Administrador General del sistema no puede eliminarse.');
       return false;
@@ -204,38 +226,126 @@ export const GymProvider = ({ children }) => {
       return false;
     }
 
-    setRoles(prev => prev.filter(r => r.id !== id));
-    addToast('info', 'Rol eliminado del catálogo.');
-    return true;
+    const target = roles.find(role => role.id === id);
+    if (!target?.backendId) {
+      addToast('error', 'El rol todavía no está sincronizado con el servidor.');
+      return false;
+    }
+    try {
+      await apiDelete(`/type-users/${target.backendId}`);
+      setRoles(prev => prev.filter(r => r.id !== id));
+      addToast('info', 'Rol eliminado del catálogo.');
+      return true;
+    } catch (error) {
+      addToast('error', `No se pudo eliminar el rol: ${error.message}`);
+      return false;
+    }
   };
 
   // Auth & Session
-  const login = (email, password) => {
-    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
-    const user = users.find(
-      u => u.email.toLowerCase() === normalizedEmail && u.password === password && u.estado === 'activo'
-    );
-    if (user && typeof password === 'string' && password.length > 0) {
-      setCurrentUser(user);
-      if (user.rol === 'admin') setCurrentView('admin-usuarios');
-      else if (user.rol === 'profesor') setCurrentView('profesor-clases');
-      else if (user.rol === 'alumno') setCurrentView('alumno-clases');
-      else setCurrentView('inicio');
+  const login = async (username, password) => {
+    let user;
+    try {
+      const auth = await apiPost('/auth/login', {
+        username: username.trim().toLowerCase(),
+        password
+      });
+      if (!auth?.token || !auth.idUsuario) {
+        throw new Error(auth?.mensaje || 'El servidor no entregó un token válido.');
+      }
+      localStorage.setItem('token', auth.token);
+      user = mapUser(await apiGet(`/users/${auth.idUsuario}`));
+      localStorage.setItem('kronofit_user_id', user.id);
+    } catch (error) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('kronofit_user_id');
+      setCurrentUser(null);
+      addToast('error', `No se pudo iniciar sesión: ${error.message}`);
+      return false;
+    }
+
+    setCurrentUser(user);
+    const targetView = user.rol === 'admin'
+      ? 'admin-usuarios'
+      : user.rol === 'profesor' ? 'profesor-clases' : 'alumno-clases';
+    setCurrentView(targetView);
+    try {
+      const [backendUsers, backendReservations, backendSubscriptions] = user.rol === 'admin'
+        ? await Promise.all([apiGet('/users'), apiGet('/reservations'), apiGet('/subscriptions')])
+        : user.rol === 'alumno'
+          ? await Promise.all([
+            Promise.resolve([]),
+            apiGet(`/reservations/by-user/${user.id}`).catch(error => {
+              addToast('error', `No se pudieron cargar tus reservas: ${error.message}`);
+              return [];
+            }),
+            apiGet(`/subscriptions/by-user/${user.id}`).catch(error => {
+              addToast('error', `No se pudieron cargar tus suscripciones: ${error.message}`);
+              return [];
+            })
+          ])
+          : await Promise.all([Promise.resolve([]), apiGet(`/reservations/by-coach/${user.id}`), Promise.resolve([])]);
+      setUsers(backendUsers.length ? backendUsers.map(mapUser) : [user]);
+      const mappedUsers = backendUsers.length ? backendUsers.map(mapUser) : [user];
+      setReservations(backendReservations.map(item => mapReservation(item, [], mappedUsers)));
+      setSubscriptions(backendSubscriptions.map(item => mapSubscription(item, mappedUsers, [])));
+      if (user.rol === 'profesor') {
+        setUsers(prev => [
+          ...prev,
+          ...backendReservations.map(item => item.user ? mapUser(item.user) : null)
+            .filter(item => item && item.id !== user.id)
+        ]);
+      }
       addToast('success', `¡Bienvenido(a), ${user.nombre}!`);
       return true;
+    } catch (error) {
+      setUsers([user]);
+      setReservations([]);
+      setSubscriptions([]);
+      addToast('error', `Sesión iniciada, pero no se pudieron cargar tus datos: ${error.message}`);
+      return true;
     }
-    addToast('error', 'Correo o contraseña incorrectos, o cuenta inactiva.');
-    return false;
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('kronofit_user_id');
     setCurrentUser(null);
+    setUsers([]);
+    setReservations([]);
+    setSubscriptions([]);
     setCurrentView('inicio');
     addToast('info', 'Has cerrado sesión exitosamente.');
   };
 
   // User CRUD
-  const createUser = userData => {
+  const toUserRequest = userData => {
+    const userRole = roles.find(role => role.id === (userData.rol || 'alumno'));
+    if (!userRole?.backendId) {
+      throw new Error('El rol seleccionado no está disponible en el servidor.');
+    }
+
+    return {
+      username: userData.email.trim().toLowerCase(),
+      paternalSurname: userData.nombre.trim(),
+      maternalSurname: userData.apellido.trim(),
+      email: userData.email.trim().toLowerCase(),
+      phone: userData.telefono || '',
+      typeUserId: userRole.backendId,
+      firstName: userData.nombre.trim(),
+      lastName: userData.apellido.trim(),
+      rut: userData.rut || '',
+      active: userData.estado !== 'inactivo',
+      planId: userData.planId ? Number(userData.planId) : null,
+      specialty: userData.especialidad || '',
+      bio: userData.bio || '',
+      emergencyContact: userData.contactoEmergencia || '',
+      avatar: userData.avatar || '',
+      registrationDate: userData.fechaRegistro || new Date().toISOString().slice(0, 10)
+    };
+  };
+
+  const createUser = async userData => {
     if (!userData.nombre || !userData.nombre.trim()) {
       return { success: false, error: 'El nombre es obligatorio.' };
     }
@@ -251,158 +361,247 @@ export const GymProvider = ({ children }) => {
       return { success: false, error: 'Este correo electrónico ya se encuentra registrado.' };
     }
 
-    const newUser = {
-      id: `usr-${Date.now()}`,
-      nombre: userData.nombre.trim(),
-      apellido: userData.apellido.trim(),
-      email: userData.email.trim().toLowerCase(),
-      password: userData.password || 'password123',
-      telefono: userData.telefono ? userData.telefono.trim() : '+56 9 9123 4567',
-      rut: userData.rut ? userData.rut.trim() : '19.821.450-2',
-      rol: userData.rol || 'alumno',
-      fechaRegistro: new Date().toISOString().split('T')[0],
-      estado: userData.estado || 'activo',
-      planId: userData.planId || 'plan-black',
-      especialidad: userData.especialidad ? userData.especialidad.trim() : '',
-      bio: userData.bio ? userData.bio.trim() : '',
-      contactoEmergencia: userData.contactoEmergencia ? userData.contactoEmergencia.trim() : '',
-      avatar: userData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80'
-    };
-
-    setUsers(prev => [newUser, ...prev]);
-
-    if (newUser.rol === 'alumno' && newUser.planId) {
-      const plan = plans.find(p => p.id === newUser.planId);
-      const sub = {
-        id: `sub-${Date.now()}`,
-        usuarioId: newUser.id,
-        usuarioNombre: `${newUser.nombre} ${newUser.apellido}`,
-        usuarioEmail: newUser.email,
-        planId: newUser.planId,
-        planNombre: plan ? plan.nombre : 'Plan Black KRONOFIT',
-        precio: plan ? plan.precio : 45990,
-        fechaInicio: new Date().toISOString().split('T')[0],
-        fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        renovacionAutomatica: true,
-        estado: 'activa',
-        metodoPago: 'Tarjeta de Crédito / Débito'
-      };
-      setSubscriptions(prev => [sub, ...prev]);
+    try {
+      const saved = await apiPost('/users', toUserRequest(userData));
+      const newUser = mapUser(saved);
+      if (userData.password) {
+        await apiPost('/auth/credenciales', {
+          username: newUser.email,
+          password: userData.password,
+          idUser: Number(newUser.id)
+        });
+      }
+      setUsers(prev => [newUser, ...prev.filter(user => user.id !== newUser.id)]);
+      addToast('success', `Usuario ${newUser.nombre} ${newUser.apellido} registrado exitosamente.`);
+      return { success: true, user: newUser };
+    } catch (error) {
+      addToast('error', `No se pudo crear el usuario: ${error.message}`);
+      return { success: false, error: error.message };
     }
-
-    addToast('success', `Usuario ${newUser.nombre} ${newUser.apellido} registrado exitosamente.`);
-    return { success: true, user: newUser };
   };
 
-  const registerUser = userData => {
-    const result = createUser({ ...userData, rol: 'alumno' });
+  const registerUser = async userData => {
+    const result = await (async () => {
+      try {
+        const role = roles.find(item => item.id === 'alumno');
+        if (!role?.backendId) throw new Error('No está configurado el rol Alumno.');
+        const savedUser = await apiPost('/users/register', toUserRequest({ ...userData, rol: 'alumno' }));
+        const user = mapUser(savedUser);
+        await apiPost('/auth/register', {
+          username: user.email,
+          password: userData.password,
+          idUser: Number(user.id)
+        });
+        const loggedIn = await login(user.email, userData.password);
+        if (!loggedIn) throw new Error('La cuenta se creó, pero no se pudo iniciar sesión.');
+        if (userData.planId) {
+          const endDate = new Date();
+          endDate.setMonth(endDate.getMonth() + 1);
+          await apiPost('/subscriptions', {
+            userId: Number(user.id),
+            plansId: Number(userData.planId),
+            endDate: `${endDate.toISOString().slice(0, 10)}T23:59:59`,
+            state: true,
+            startDate: new Date().toISOString().slice(0, 10),
+            autoRenew: true,
+            paymentMethod: 'Tarjeta de Crédito / Débito'
+          });
+        }
+        return { success: true, user };
+      } catch (error) {
+        addToast('error', `No se pudo completar el registro: ${error.message}`);
+        return { success: false, error: error.message };
+      }
+    })();
     if (!result.success) return result;
-
-    setCurrentUser(result.user);
-    setCurrentView('alumno-clases');
     return result;
   };
 
-  const updateUser = (id, userData) => {
-    setUsers(prev => prev.map(u => (u.id === id ? { ...u, ...userData } : u)));
-    if (currentUser?.id === id) {
-      setCurrentUser(prev => (prev ? { ...prev, ...userData } : null));
+  const updateUser = async (id, userData) => {
+    try {
+      const existing = users.find(user => user.id === id) || currentUser;
+      const saved = await apiPut(`/users/${id}`, toUserRequest({ ...existing, ...userData }));
+      const updatedUser = mapUser(saved);
+      setUsers(prev => prev.map(user => user.id === id ? updatedUser : user));
+      if (currentUser?.id === id) setCurrentUser(updatedUser);
+      addToast('success', 'Usuario actualizado correctamente.');
+      return { success: true, user: updatedUser };
+    } catch (error) {
+      addToast('error', `No se pudo actualizar el usuario: ${error.message}`);
+      return { success: false, error: error.message };
     }
-    addToast('success', 'Usuario actualizado correctamente.');
   };
 
-  const deleteUser = id => {
-    setUsers(prev => prev.filter(u => u.id !== id));
-    addToast('info', 'Usuario eliminado del sistema.');
+  const deleteUser = async id => {
+    try {
+      const credentials = await apiGet('/auth/credenciales');
+      const userCredential = credentials.find(credential => String(credential.idUser) === id);
+      if (userCredential) await apiDelete(`/auth/credenciales/${userCredential.idCredencial}`);
+      await apiDelete(`/users/${id}`);
+      setUsers(prev => prev.filter(user => user.id !== id));
+      addToast('info', 'Usuario eliminado del sistema.');
+      return true;
+    } catch (error) {
+      addToast('error', `No se pudo eliminar el usuario: ${error.message}`);
+      return false;
+    }
   };
 
-  const changePassword = (userId, newPass) => {
-    setUsers(prev => prev.map(u => (u.id === userId ? { ...u, password: newPass } : u)));
-    if (currentUser?.id === userId) {
-      setCurrentUser(prev => (prev ? { ...prev, password: newPass } : null));
+  const changePassword = async (userId, newPass, currentPassword) => {
+    try {
+      await apiPut(`/auth/users/${userId}/password`, {
+        currentPassword,
+        newPassword: newPass
+      });
+      addToast('success', 'Contraseña actualizada con éxito.');
+      return { success: true, message: 'Contraseña actualizada correctamente.' };
+    } catch (error) {
+      addToast('error', `No se pudo actualizar la contraseña: ${error.message}`);
+      return { success: false, message: error.message };
     }
-    addToast('success', 'Contraseña actualizada con éxito.');
-    return { success: true, message: 'Contraseña actualizada correctamente.' };
   };
 
   // Class CRUD
-  const createClass = classData => {
-    const prof = users.find(u => u.id === classData.profesorId);
-    const newClass = {
-      id: `cls-${Date.now()}`,
-      nombre: classData.nombre.trim(),
-      descripcion: classData.descripcion ? classData.descripcion.trim() : 'Entrenamiento guiado por coach especializado.',
-      profesorId: classData.profesorId || (users.find(u => u.rol === 'profesor')?.id || ''),
-      profesorNombre: prof ? `${prof.nombre} ${prof.apellido}` : (classData.profesorNombre || 'Coach KRONOFIT'),
-      categoria: classData.categoria || 'CrossFit & Funcional',
-      intensidad: classData.intensidad || 'Media',
-      sala: classData.sala ? classData.sala.trim() : 'Sala 1',
-      horario: classData.horario ? classData.horario.trim() : 'Lunes y Miércoles 08:00 - 09:00',
-      dias: classData.dias || ['Lunes', 'Miércoles'],
-      horaInicio: classData.horaInicio || '08:00',
-      horaFin: classData.horaFin || '09:00',
-      cupoMaximo: Number(classData.cupoMaximo) || 16,
-      cupoDisponible: Number(classData.cupoMaximo) || 16,
-      imagen: classData.imagen || classFunctionalImage,
-      estado: classData.estado || 'activa'
-    };
-    setClasses(prev => [newClass, ...prev]);
-    addToast('success', `Clase "${newClass.nombre}" programada.`);
-  };
+  const classRequest = async (classData, existingClass) => {
+    const categories = await apiGet('/type-classes');
+    let category = categories.find(item => item.name.toLowerCase() === classData.categoria.trim().toLowerCase());
+    if (!category) category = await apiPost('/type-classes', { name: classData.categoria.trim() });
 
-  const updateClass = (id, classData) => {
-    setClasses(prev =>
-      prev.map(c => {
-        if (c.id === id) {
-          const prof = classData.profesorId ? users.find(u => u.id === classData.profesorId) : null;
-          return {
-            ...c,
-            ...classData,
-            profesorNombre: prof ? `${prof.nombre} ${prof.apellido}` : c.profesorNombre
-          };
+    const [startTime, endTime] = (classData.horario.match(/\b\d{1,2}:\d{2}\b/g) || []);
+    const start = existingClass?.fecha ? new Date(existingClass.fecha) : new Date();
+    const weekdayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const scheduledDay = (classData.dias || []).map(day => day.toLowerCase())[0]
+      || weekdayNames.find(day => classData.horario.toLowerCase().includes(day));
+    if (!existingClass && scheduledDay) {
+      const targetDay = weekdayNames.indexOf(scheduledDay);
+      if (targetDay >= 0) {
+        let dayOffset = (targetDay - start.getDay() + 7) % 7;
+        const [hour, minute] = (startTime || '08:00').split(':').map(Number);
+        if (dayOffset === 0 && (hour < start.getHours() || (hour === start.getHours() && minute <= start.getMinutes()))) {
+          dayOffset = 7;
         }
-        return c;
-      })
-    );
-    addToast('success', 'Clase actualizada con éxito.');
+        start.setDate(start.getDate() + dayOffset);
+      }
+    }
+    const toDateTime = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:00`;
+    const [startHour, startMinute] = (startTime || classData.horaInicio || '08:00').split(':').map(Number);
+    const [endHour, endMinute] = (endTime || classData.horaFin || '09:00').split(':').map(Number);
+    start.setHours(startHour, startMinute, 0, 0);
+    const end = new Date(start);
+    end.setHours(endHour, endMinute, 0, 0);
+    if (end <= start) end.setDate(end.getDate() + 1);
+
+    const coach = users.find(user => user.id === classData.profesorId);
+    return {
+      startDate: toDateTime(start),
+      endDate: toDateTime(end),
+      maximumCapacity: Number(classData.cupoMaximo),
+      spotsAvailable: existingClass
+        ? Math.min(existingClass.cupoDisponible, Number(classData.cupoMaximo))
+        : Number(classData.cupoMaximo),
+      typeClasse: { id: category.id, name: category.name },
+      name: classData.nombre.trim(),
+      description: classData.descripcion || '',
+      coachId: classData.profesorId ? Number(classData.profesorId) : null,
+      coachName: coach ? `${coach.nombre} ${coach.apellido}` : '',
+      intensity: classData.intensidad || 'Media',
+      room: classData.sala || '',
+      image: classData.imagen || '',
+      active: classData.estado !== 'inactiva'
+    };
   };
 
-  const deleteClass = id => {
-    setClasses(prev => prev.filter(c => c.id !== id));
-    addToast('info', 'Clase eliminada del catálogo.');
+  const createClass = async classData => {
+    try {
+      const saved = await apiPost('/classes', await classRequest(classData));
+      const newClass = mapClass(saved);
+      setClasses(prev => [newClass, ...prev]);
+      addToast('success', `Clase "${newClass.nombre}" programada.`);
+      return { success: true, class: newClass };
+    } catch (error) {
+      addToast('error', `No se pudo crear la clase: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateClass = async (id, classData) => {
+    try {
+      const existing = classes.find(gymClass => gymClass.id === id);
+      const saved = await apiPut(`/classes/${id}`, await classRequest(classData, existing));
+      const updatedClass = mapClass(saved);
+      setClasses(prev => prev.map(gymClass => gymClass.id === id ? updatedClass : gymClass));
+      addToast('success', 'Clase actualizada con éxito.');
+      return { success: true, class: updatedClass };
+    } catch (error) {
+      addToast('error', `No se pudo actualizar la clase: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const deleteClass = async id => {
+    try {
+      await apiDelete(`/classes/${id}`);
+      setClasses(prev => prev.filter(gymClass => gymClass.id !== id));
+      addToast('info', 'Clase eliminada del catálogo.');
+      return true;
+    } catch (error) {
+      addToast('error', `No se pudo eliminar la clase: ${error.message}`);
+      return false;
+    }
   };
 
   // Plan CRUD
-  const createPlan = planData => {
-    const newPlan = {
-      id: `plan-${Date.now()}`,
-      nombre: planData.nombre.trim(),
-      precio: Number(planData.precio) || 39990,
-      moneda: '$',
-      periodo: planData.periodo || 'Mensual',
-      duracionMeses: Number(planData.duracionMeses) || 1,
-      clasesPorMes: planData.clasesPorMes || 'Clases Ilimitadas',
-      beneficios: Array.isArray(planData.beneficios) ? planData.beneficios : ['Acceso a sala de pesas y cardio'],
-      destacado: Boolean(planData.destacado),
-      estado: planData.estado || 'activo',
-      usuariosActivos: 0
-    };
-    setPlans(prev => [...prev, newPlan]);
-    addToast('success', `Plan "${newPlan.nombre}" creado.`);
+  const planRequest = planData => ({
+    name: planData.nombre.trim(),
+    price: Number(planData.precio),
+    durationDays: Number(planData.duracionMeses) * 30,
+    period: planData.periodo || 'Mensual',
+    classesPerMonth: planData.clasesPorMes || 'Clases Ilimitadas',
+    benefits: Array.isArray(planData.beneficios) ? planData.beneficios.join('\n') : '',
+    featured: Boolean(planData.destacado),
+    active: planData.estado !== 'inactivo'
+  });
+
+  const createPlan = async planData => {
+    try {
+      const saved = await apiPost('/plans', planRequest(planData));
+      const newPlan = mapPlan(saved);
+      setPlans(prev => [...prev, newPlan]);
+      addToast('success', `Plan "${newPlan.nombre}" creado.`);
+      return { success: true, plan: newPlan };
+    } catch (error) {
+      addToast('error', `No se pudo crear el plan: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   };
 
-  const updatePlan = (id, planData) => {
-    setPlans(prev => prev.map(p => (p.id === id ? { ...p, ...planData } : p)));
-    addToast('success', 'Plan actualizado correctamente.');
+  const updatePlan = async (id, planData) => {
+    try {
+      const saved = await apiPut(`/plans/${id}`, planRequest(planData));
+      const updatedPlan = mapPlan(saved);
+      setPlans(prev => prev.map(plan => plan.id === id ? updatedPlan : plan));
+      addToast('success', 'Plan actualizado correctamente.');
+      return { success: true, plan: updatedPlan };
+    } catch (error) {
+      addToast('error', `No se pudo actualizar el plan: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   };
 
-  const deletePlan = id => {
-    setPlans(prev => prev.filter(p => p.id !== id));
-    addToast('info', 'Plan eliminado de las opciones.');
+  const deletePlan = async id => {
+    try {
+      await apiDelete(`/plans/${id}`);
+      setPlans(prev => prev.filter(plan => plan.id !== id));
+      addToast('info', 'Plan eliminado de las opciones.');
+      return true;
+    } catch (error) {
+      addToast('error', `No se pudo eliminar el plan: ${error.message}`);
+      return false;
+    }
   };
 
   // Reservation Actions
-  const bookClass = (claseId, alumnoId) => {
+  const bookClass = async (claseId, alumnoId) => {
     const targetUserId = alumnoId || currentUser?.id;
     if (!targetUserId) {
       return { success: false, message: 'Debes iniciar sesión para reservar una clase.' };
@@ -429,129 +628,206 @@ export const GymProvider = ({ children }) => {
       return { success: false, message: 'Ya posees una reserva confirmada para esta clase.' };
     }
 
-    setClasses(prev =>
-      prev.map(c => (c.id === claseId ? { ...c, cupoDisponible: Math.max(0, c.cupoDisponible - 1) } : c))
-    );
-
-    const newRes = {
-      id: `res-${Date.now()}`,
-      claseId: gymClass.id,
-      claseNombre: gymClass.nombre,
-      claseHorario: gymClass.horario,
-      claseSala: gymClass.sala,
-      alumnoId: student.id,
-      alumnoNombre: `${student.nombre} ${student.apellido}`,
-      alumnoEmail: student.email,
-      profesorId: gymClass.profesorId,
-      profesorNombre: gymClass.profesorNombre,
-      fechaClase: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      fechaReserva: new Date().toISOString().replace('T', ' ').slice(0, 16),
-      estado: 'confirmada',
-      asistenciaRegistrada: false
-    };
-
-    setReservations(prev => [newRes, ...prev]);
-    addToast('success', `¡Cupo reservado con éxito para ${gymClass.nombre}!`);
-    return { success: true, message: 'Reserva confirmada.' };
+    try {
+      const request = {
+        idUser: Number(student.id),
+        idClasse: Number(gymClass.id),
+        idCoach: gymClass.profesorId ? Number(gymClass.profesorId) : null,
+        reservationDate: gymClass.fecha || `${new Date().toISOString().slice(0, 10)}T${gymClass.horaInicio || '08:00'}:00`,
+        reservationStatus: 'CONFIRMADA'
+      };
+      const saved = await apiPost('/reservations', request);
+      const reservation = mapReservation(saved, classes, users);
+      const classRequestBody = await classRequest(gymClass, gymClass);
+      classRequestBody.spotsAvailable = Math.max(0, gymClass.cupoDisponible - 1);
+      const updatedClass = mapClass(await apiPut(`/classes/${gymClass.id}`, classRequestBody));
+      setClasses(prev => prev.map(item => item.id === gymClass.id ? updatedClass : item));
+      setReservations(prev => [reservation, ...prev]);
+      addToast('success', `¡Cupo reservado con éxito para ${gymClass.nombre}!`);
+      return { success: true, message: 'Reserva confirmada.' };
+    } catch (error) {
+      addToast('error', `No se pudo completar la reserva: ${error.message}`);
+      return { success: false, message: error.message };
+    }
   };
 
-  const cancelReservation = reservationId => {
+  const reservationRequest = (reservation, status) => ({
+    idUser: Number(reservation.backendReservation?.idUser || reservation.alumnoId),
+    idClasse: Number(reservation.backendReservation?.idClasse || reservation.claseId),
+    idCoach: reservation.backendReservation?.idCoach || (reservation.profesorId ? Number(reservation.profesorId) : null),
+    reservationDate: reservation.backendReservation?.reservationDate || `${reservation.fechaClase}T08:00:00`,
+    reservationStatus: status.toUpperCase()
+  });
+
+  const cancelReservation = async reservationId => {
     const res = reservations.find(r => r.id === reservationId);
     if (!res) return;
 
-    if (res.estado === 'confirmada') {
-      setClasses(prev =>
-        prev.map(c => (c.id === res.claseId ? { ...c, cupoDisponible: c.cupoDisponible + 1 } : c))
-      );
-    }
-
-    setReservations(prev =>
-      prev.map(r => (r.id === reservationId ? { ...r, estado: 'cancelada' } : r))
-    );
-    addToast('info', `Reserva cancelada para ${res.claseNombre}. Cupo liberado.`);
-  };
-
-  const confirmReservation = reservationId => {
-    setReservations(prev =>
-      prev.map(r => (r.id === reservationId ? { ...r, estado: 'confirmada' } : r))
-    );
-    addToast('success', 'Reserva confirmada.');
-  };
-
-  const updateReservationStatus = (reservationId, estado) => {
-    setReservations(prev =>
-      prev.map(r => (r.id === reservationId ? { ...r, estado } : r))
-    );
-    addToast('success', `Estado de reserva actualizado a "${estado}".`);
-  };
-
-  const toggleAttendance = (reservationId, attended) => {
-    setReservations(prev =>
-      prev.map(r => {
-        if (r.id === reservationId) {
-          return {
-            ...r,
-            asistenciaRegistrada: attended,
-            asistenciaHora: attended ? new Date().toTimeString().slice(0, 5) : undefined,
-            estado: attended ? 'asistio' : 'confirmada'
-          };
+    try {
+      const saved = await apiPut(`/reservations/${reservationId}`, reservationRequest(res, 'cancelada'));
+      const updatedReservation = mapReservation(saved, classes, users);
+      if (res.estado === 'confirmada') {
+        const gymClass = classes.find(item => item.id === res.claseId);
+        if (gymClass) {
+          const body = await classRequest(gymClass, gymClass);
+          body.spotsAvailable = gymClass.cupoDisponible + 1;
+          const updatedClass = mapClass(await apiPut(`/classes/${gymClass.id}`, body));
+          setClasses(prev => prev.map(item => item.id === gymClass.id ? updatedClass : item));
         }
-        return r;
-      })
-    );
-    addToast(attended ? 'success' : 'info', attended ? 'Asistencia registrada' : 'Asistencia desmarcada');
+      }
+      setReservations(prev => prev.map(item => item.id === reservationId ? updatedReservation : item));
+      addToast('info', `Reserva cancelada para ${res.claseNombre}. Cupo liberado.`);
+    } catch (error) {
+      addToast('error', `No se pudo cancelar la reserva: ${error.message}`);
+    }
+  };
+
+  const confirmReservation = async reservationId => {
+    const reservation = reservations.find(item => item.id === reservationId);
+    if (!reservation) return;
+    try {
+      const saved = await apiPut(`/reservations/${reservationId}`, reservationRequest(reservation, 'confirmada'));
+      setReservations(prev => prev.map(item => item.id === reservationId
+        ? mapReservation(saved, classes, users)
+        : item));
+      addToast('success', 'Reserva confirmada.');
+    } catch (error) {
+      addToast('error', `No se pudo confirmar la reserva: ${error.message}`);
+    }
+  };
+
+  const updateReservationStatus = async (reservationId, estado) => {
+    const reservation = reservations.find(item => item.id === reservationId);
+    if (!reservation) return;
+    try {
+      const saved = await apiPut(`/reservations/${reservationId}`, reservationRequest(reservation, estado));
+      setReservations(prev => prev.map(item => item.id === reservationId
+        ? mapReservation(saved, classes, users)
+        : item));
+      addToast('success', `Estado de reserva actualizado a "${estado}".`);
+    } catch (error) {
+      addToast('error', `No se pudo actualizar la reserva: ${error.message}`);
+    }
+  };
+
+  const toggleAttendance = async (reservationId, attended) => {
+    const reservation = reservations.find(item => item.id === reservationId);
+    if (!reservation) return;
+    try {
+      const attendanceRows = await apiGet(`/assistances/by-user/${reservation.alumnoId}`);
+      const existing = attendanceRows.find(row => String(row.idClasse) === reservation.claseId);
+      if (attended) {
+        const body = {
+          idUser: Number(reservation.alumnoId),
+          idClasse: Number(reservation.claseId),
+          arrivalTime: new Date().toISOString().slice(0, 19),
+          assist: true
+        };
+        if (existing) await apiPut(`/assistances/${existing.idAssistance}`, body);
+        else await apiPost('/assistances', body);
+      } else if (existing) {
+        await apiDelete(`/assistances/${existing.idAssistance}`);
+      }
+      setReservations(prev => prev.map(item => item.id === reservationId
+        ? { ...item, asistenciaRegistrada: attended, estado: attended ? 'asistio' : 'confirmada' }
+        : item));
+      addToast(attended ? 'success' : 'info', attended ? 'Asistencia registrada' : 'Asistencia desmarcada');
+    } catch (error) {
+      addToast('error', `No se pudo actualizar la asistencia: ${error.message}`);
+    }
   };
 
   // Subscription Actions
-  const renewSubscription = subId => {
-    setSubscriptions(prev =>
-      prev.map(s => {
-        if (s.id === subId) {
-          const nextDate = new Date();
-          nextDate.setMonth(nextDate.getMonth() + 1);
-          return {
-            ...s,
-            estado: 'activa',
-            fechaVencimiento: nextDate.toISOString().split('T')[0]
-          };
-        }
-        return s;
-      })
-    );
-    addToast('success', 'Suscripción renovada por 30 días adicionales.');
+  const subscriptionRequest = (subscription, overrides = {}) => ({
+    userId: Number(subscription.usuarioId),
+    plansId: Number(subscription.planId),
+    endDate: `${overrides.fechaVencimiento || subscription.fechaVencimiento}T23:59:59`,
+    state: overrides.estado ? overrides.estado === 'activa' : subscription.estado === 'activa',
+    startDate: `${subscription.fechaInicio || new Date().toISOString().slice(0, 10)}T00:00:00`,
+    autoRenew: overrides.renovacionAutomatica ?? subscription.renovacionAutomatica,
+    paymentMethod: subscription.metodoPago || ''
+  });
+
+  const renewSubscription = async subId => {
+    const subscription = subscriptions.find(item => item.id === subId);
+    if (!subscription) return;
+    const nextDate = new Date();
+    nextDate.setMonth(nextDate.getMonth() + 1);
+    const fechaVencimiento = nextDate.toISOString().slice(0, 10);
+    try {
+      const saved = await apiPut(`/subscriptions/${subId}`, subscriptionRequest(subscription, {
+        fechaVencimiento,
+        estado: 'activa',
+        renovacionAutomatica: true
+      }));
+      setSubscriptions(prev => prev.map(item => item.id === subId ? mapSubscription(saved) : item));
+      addToast('success', 'Suscripción renovada por 30 días adicionales.');
+    } catch (error) {
+      addToast('error', `No se pudo renovar la suscripción: ${error.message}`);
+    }
   };
 
-  const cancelSubscription = subId => {
-    setSubscriptions(prev =>
-      prev.map(s => (s.id === subId ? { ...s, estado: 'cancelada', renovacionAutomatica: false } : s))
-    );
-    addToast('info', 'Suscripción cancelada. No se generarán cobros recurrentes.');
+  const cancelSubscription = async subId => {
+    const subscription = subscriptions.find(item => item.id === subId);
+    if (!subscription) return;
+    try {
+      const saved = await apiPut(`/subscriptions/${subId}`, subscriptionRequest(subscription, {
+        estado: 'cancelada',
+        renovacionAutomatica: false
+      }));
+      setSubscriptions(prev => prev.map(item => item.id === subId ? mapSubscription(saved) : item));
+      addToast('info', 'Suscripción cancelada. No se generarán cobros recurrentes.');
+    } catch (error) {
+      addToast('error', `No se pudo cancelar la suscripción: ${error.message}`);
+    }
   };
 
-  const createSubscription = subData => {
-    const user = users.find(u => u.id === subData.usuarioId);
-    const plan = plans.find(p => p.id === subData.planId);
-    const newSub = {
-      id: `sub-${Date.now()}`,
-      usuarioId: subData.usuarioId || '',
-      usuarioNombre: user ? `${user.nombre} ${user.apellido}` : (subData.usuarioNombre || 'Cliente KRONOFIT'),
-      usuarioEmail: user ? user.email : (subData.usuarioEmail || ''),
-      planId: subData.planId || 'plan-black',
-      planNombre: plan ? plan.nombre : (subData.planNombre || 'Plan Black'),
-      precio: plan ? plan.precio : (Number(subData.precio) || 45990),
-      fechaInicio: subData.fechaInicio || new Date().toISOString().split('T')[0],
-      fechaVencimiento: subData.fechaVencimiento || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      renovacionAutomatica: subData.renovacionAutomatica ?? true,
-      estado: subData.estado || 'activa',
-      metodoPago: subData.metodoPago || 'Tarjeta de Crédito / Débito'
-    };
-    setSubscriptions(prev => [newSub, ...prev]);
-    addToast('success', `Suscripción asignada a ${newSub.usuarioNombre}.`);
+  const createSubscription = async (userOrData, planId, paymentMethod) => {
+    const subData = typeof userOrData === 'object'
+      ? userOrData
+      : { usuarioId: userOrData, planId, metodoPago: paymentMethod };
+    const user = users.find(item => item.id === String(subData.usuarioId)) || currentUser;
+    const plan = plans.find(item => item.id === String(subData.planId));
+    const startDate = subData.fechaInicio || new Date().toISOString().slice(0, 10);
+    const endDate = subData.fechaVencimiento || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    try {
+      const saved = await apiPost('/subscriptions', {
+        userId: Number(subData.usuarioId),
+        plansId: Number(subData.planId),
+        endDate: `${endDate}T23:59:59`,
+        startDate: `${startDate}T00:00:00`,
+        state: true,
+        autoRenew: subData.renovacionAutomatica ?? true,
+        paymentMethod: subData.metodoPago || 'Tarjeta de Crédito / Débito'
+      });
+      const newSub = mapSubscription({
+        ...saved,
+        userName: user ? `${user.nombre} ${user.apellido}` : '',
+        userEmail: user?.email || '',
+        planName: plan?.nombre || '',
+        price: plan?.precio || 0
+      });
+      setSubscriptions(prev => [newSub, ...prev]);
+      addToast('success', `Suscripción asignada a ${newSub.usuarioNombre || user?.nombre || 'el usuario'}.`);
+      return { success: true, subscription: newSub };
+    } catch (error) {
+      addToast('error', `No se pudo crear la suscripción: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   };
 
-  const updateSubscription = (subId, subData) => {
-    setSubscriptions(prev => prev.map(s => (s.id === subId ? { ...s, ...subData } : s)));
-    addToast('success', 'Suscripción actualizada.');
+  const updateSubscription = async (subId, subData) => {
+    const subscription = subscriptions.find(item => item.id === subId);
+    if (!subscription) return { success: false, error: 'Suscripción no encontrada.' };
+    try {
+      const saved = await apiPut(`/subscriptions/${subId}`, subscriptionRequest(subscription, subData));
+      setSubscriptions(prev => prev.map(item => item.id === subId ? mapSubscription(saved) : item));
+      addToast('success', 'Suscripción actualizada.');
+      return { success: true };
+    } catch (error) {
+      addToast('error', `No se pudo actualizar la suscripción: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   };
 
   return (

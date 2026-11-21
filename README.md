@@ -2,7 +2,7 @@
 
 Aplicacion web frontend para administrar un centro deportivo: usuarios, roles, clases, reservas, planes y suscripciones.
 
-El proyecto esta construido con React y Vite. La interfaz utiliza clases utilitarias de Tailwind CSS y los datos de demostracion se guardan en `localStorage`.
+El proyecto esta construido con React y Vite. Los datos se consultan y actualizan mediante el API Gateway de Spring Boot. La sesion usa un token JWT almacenado en `localStorage`.
 
 ## Requisitos
 
@@ -23,7 +23,15 @@ npm install
 npm run dev
 ```
 
-Vite mostrara en la terminal la URL local, normalmente `http://localhost:5173`.
+Vite muestra la URL local, normalmente `http://localhost:5173`, y reenvia `/api` a `http://localhost:8090`. Inicia antes el backend y sus microservicios.
+
+Para apuntar a otro Gateway, crea un archivo `.env.local` con:
+
+```text
+VITE_API_URL=http://localhost:8090/api/v1
+```
+
+En produccion configura `VITE_API_URL` con la URL publica del Gateway y `CORS_ALLOWED_ORIGINS` en `ms-apiGateway`.
 
 Para crear una compilacion de produccion:
 
@@ -31,23 +39,20 @@ Para crear una compilacion de produccion:
 npm run build
 ```
 
-## Cuentas de demostracion
+## Autenticacion
 
-Todas usan la contraseña `password123`:
+El inicio de sesion usa `POST /api/v1/auth/login`; el registro crea un usuario Alumno y sus credenciales en el backend. Las solicitudes autenticadas envian `Authorization: Bearer <token>`. El token se elimina al cerrar sesion o cuando el Gateway responde `401`.
 
-| Rol           | Correo                         |
-| ------------- | ------------------------------ |
-| Administrador | `admin@kronofit.com`         |
-| Profesor      | `carlos.rivera@kronofit.com` |
-| Alumno        | `camila.soto@gmail.com`      |
+La migracion inicial del backend incluye `admin` / `admin123`. Cambia esa credencial antes de exponer el sistema.
 
 ## Estructura principal
 
 ```text
 src/
   components/       Componentes reutilizables de la interfaz
-  context/          Estado global y persistencia de la aplicacion
+  context/          Estado global y operaciones remotas del backend
   data/             Datos iniciales de demostracion
+  services/         Cliente fetch del API y adaptadores de DTO
   pages/            Vistas publicas y paneles por rol
   utils/            Validadores y funciones auxiliares
 tests/

@@ -45,7 +45,7 @@ export const RegisterPage = () => {
     if (generalError) setGeneralError(null);
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setGeneralError(null);
 
@@ -62,12 +62,14 @@ export const RegisterPage = () => {
     }
 
     setIsSubmitting(true);
-    const result = registerUser(formData);
-
-    if (!result.success) {
-      setGeneralError(result.error);
+    try {
+      const result = await registerUser(formData);
+      if (!result.success) {
+        setGeneralError(result.error);
+        return;
+      }
+    } finally {
       setIsSubmitting(false);
-      return;
     }
 
   };

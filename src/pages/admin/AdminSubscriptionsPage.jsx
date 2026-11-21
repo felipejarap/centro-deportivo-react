@@ -76,7 +76,7 @@ export const AdminSubscriptionsPage = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setGeneralError(null);
 
@@ -93,8 +93,11 @@ export const AdminSubscriptionsPage = () => {
       return;
     }
 
-    createSubscription(selectedUser.id, selectedPlan.id, formData.metodoPago);
-    addToast('success', `Suscripción al plan "${selectedPlan.nombre}" asignada con éxito.`);
+    const result = await createSubscription(selectedUser.id, selectedPlan.id, formData.metodoPago);
+    if (!result.success) {
+      setGeneralError(result.error);
+      return;
+    }
     setIsModalOpen(false);
   };
 

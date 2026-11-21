@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const AdminClassesPage = () => {
-  const { classes, users, createClass, updateClass, deleteClass, addToast } = useGym();
+  const { classes, users, createClass, updateClass, deleteClass } = useGym();
 
   const professors = users.filter(u => u.rol === 'profesor');
 
@@ -109,7 +109,7 @@ export const AdminClassesPage = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setGeneralError(null);
 
@@ -119,11 +119,17 @@ export const AdminClassesPage = () => {
     }
 
     if (editingClass) {
-      updateClass(editingClass.id, formData);
-      addToast('success', `Clase "${formData.nombre}" actualizada.`);
+      const result = await updateClass(editingClass.id, formData);
+      if (!result.success) {
+        setGeneralError(result.error);
+        return;
+      }
     } else {
-      createClass(formData);
-      addToast('success', `Clase "${formData.nombre}" creada con éxito.`);
+      const result = await createClass(formData);
+      if (!result.success) {
+        setGeneralError(result.error);
+        return;
+      }
     }
     setIsModalOpen(false);
   };
@@ -378,11 +384,9 @@ export const AdminClassesPage = () => {
       <ConfirmModal
         isOpen={!!deleteConfirmClass}
         onClose={() => setDeleteConfirmClass(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (deleteConfirmClass) {
-            deleteClass(deleteConfirmClass.id);
-            addToast('info', `Clase "${deleteConfirmClass.nombre}" eliminada.`);
-            setDeleteConfirmClass(null);
+            if (await deleteClass(deleteConfirmClass.id)) setDeleteConfirmClass(null);
           }
         }}
         title="¿Eliminar Clase?"

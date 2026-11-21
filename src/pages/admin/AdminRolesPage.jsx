@@ -145,7 +145,7 @@ export const AdminRolesPage = () => {
   };
 
   // Direct toggle in Accordion row
-  const handleDirectTogglePermission = (role, permId) => {
+  const handleDirectTogglePermission = async (role, permId) => {
     const currentPerms = Array.isArray(role.permisos) ? role.permisos : [];
     const exists = currentPerms.includes(permId);
     const updatedPerms = exists
@@ -157,7 +157,7 @@ export const AdminRolesPage = () => {
       return;
     }
 
-    const res = updateRole(role.id, {
+    const res = await updateRole(role.id, {
       nombre: role.nombre,
       descripcion: role.descripcion,
       permisos: updatedPerms
@@ -171,7 +171,7 @@ export const AdminRolesPage = () => {
   };
 
   // Direct toggle for all permissions of a module directly in Accordion
-  const handleDirectToggleModuleAll = (role, mod) => {
+  const handleDirectToggleModuleAll = async (role, mod) => {
     const currentPerms = Array.isArray(role.permisos) ? role.permisos : [];
     const modPermIds = mod.acciones.map(acc => getPermissionId(mod.id, acc));
     const allSelected = modPermIds.every(id => currentPerms.includes(id));
@@ -189,7 +189,7 @@ export const AdminRolesPage = () => {
       return;
     }
 
-    const res = updateRole(role.id, {
+    const res = await updateRole(role.id, {
       nombre: role.nombre,
       descripcion: role.descripcion,
       permisos: updatedPerms
@@ -203,7 +203,7 @@ export const AdminRolesPage = () => {
   };
 
   // Handle Form Submit with View-level validation
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setGeneralError(null);
 
@@ -219,7 +219,7 @@ export const AdminRolesPage = () => {
     }
 
     if (editingRole) {
-      const res = updateRole(editingRole.id, {
+      const res = await updateRole(editingRole.id, {
         nombre: formData.nombre,
         descripcion: formData.descripcion,
         permisos: formData.permisos
@@ -230,7 +230,7 @@ export const AdminRolesPage = () => {
       }
       addToast('success', `Rol "${formData.nombre}" actualizado con éxito.`);
     } else {
-      const res = createRole({
+      const res = await createRole({
         id: formData.id.toLowerCase().trim(),
         nombre: formData.nombre,
         descripcion: formData.descripcion,
@@ -604,11 +604,9 @@ export const AdminRolesPage = () => {
       <ConfirmModal
         isOpen={!!deleteConfirmRole}
         onClose={() => setDeleteConfirmRole(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (deleteConfirmRole) {
-            deleteRole(deleteConfirmRole.id);
-            addToast('info', `Rol "${deleteConfirmRole.nombre}" eliminado.`);
-            setDeleteConfirmRole(null);
+            if (await deleteRole(deleteConfirmRole.id)) setDeleteConfirmRole(null);
           }
         }}
         title="¿Eliminar Rol?"

@@ -112,7 +112,7 @@ export const AdminUsersPage = () => {
     if (generalError) setGeneralError(null);
   };
 
-  const handleFormSubmit = e => {
+  const handleFormSubmit = async e => {
     e.preventDefault();
     setGeneralError(null);
 
@@ -132,7 +132,7 @@ export const AdminUsersPage = () => {
     setIsSubmitting(true);
 
     if (editingUser) {
-      const result = updateUser(editingUser.id, formData);
+      const result = await updateUser(editingUser.id, formData);
       if (!result.success) {
         setGeneralError(result.error);
         setIsSubmitting(false);
@@ -140,7 +140,7 @@ export const AdminUsersPage = () => {
       }
       addToast('success', `Usuario ${formData.nombre} ${formData.apellido} actualizado.`);
     } else {
-      const result = createUser(formData);
+      const result = await createUser(formData);
       if (!result.success) {
         setGeneralError(result.error);
         setIsSubmitting(false);
@@ -153,11 +153,9 @@ export const AdminUsersPage = () => {
     setIsModalOpen(false);
   };
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (deleteConfirmUser) {
-      deleteUser(deleteConfirmUser.id);
-      addToast('info', `Usuario ${deleteConfirmUser.nombre} eliminado.`);
-      setDeleteConfirmUser(null);
+      if (await deleteUser(deleteConfirmUser.id)) setDeleteConfirmUser(null);
     }
   };
 

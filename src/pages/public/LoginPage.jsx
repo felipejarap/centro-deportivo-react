@@ -14,7 +14,7 @@ export const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setGeneralError(null);
 
@@ -25,9 +25,9 @@ export const LoginPage = () => {
       return;
     }
 
-    const success = login(email, password);
+    const success = await login(email, password);
     if (!success) {
-      setGeneralError('Correo o contraseña incorrectos, o cuenta inactiva.');
+      setGeneralError('No se pudo iniciar sesión. Revisa tus credenciales o la conexión con el servidor.');
     }
   };
 
@@ -57,17 +57,17 @@ export const LoginPage = () => {
           )}
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            <FormField label="Correo Electrónico" error={errors.email} required>
+            <FormField label="Correo o usuario" error={errors.email} required>
               <div className="relative">
                 <Mail className="w-4 h-4 text-neutral-500 absolute left-3 top-3 pointer-events-none" />
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={e => {
                     setEmail(e.target.value);
                     if (errors.email) setErrors({ ...errors, email: null });
                   }}
-                  placeholder="ejemplo@correo.com"
+                  placeholder="correo@ejemplo.com"
                   className={`w-full bg-neutral-950 border rounded-lg pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none transition-colors ${
                     errors.email ? 'border-rose-500' : 'border-neutral-800 focus:border-amber-500'
                   }`}
@@ -117,19 +117,6 @@ export const LoginPage = () => {
           </div>
         </Card>
 
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-4 space-y-3">
-          <p className="text-center text-[11px] font-bold uppercase tracking-wider text-neutral-400">
-            Cuentas de prueba
-          </p>
-          <div className="grid gap-x-4 gap-y-3 text-xs text-neutral-300 sm:grid-cols-3">
-            <p className="min-w-0 break-all"><span className="block break-normal text-neutral-500">Administrador</span>admin@kronofit.com</p>
-            <p className="min-w-0 break-all"><span className="block break-normal text-neutral-500">Profesor</span>carlos.rivera@kronofit.com</p>
-            <p className="min-w-0 break-all"><span className="block break-normal text-neutral-500">Alumno</span>camila.soto@gmail.com</p>
-          </div>
-          <p className="text-center text-xs text-neutral-400">
-            Contraseña para las tres cuentas: <code className="text-amber-400">password123</code>
-          </p>
-        </div>
       </div>
     </div>
   );

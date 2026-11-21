@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const AdminPlansPage = () => {
-  const { plans, createPlan, updatePlan, deletePlan, addToast } = useGym();
+  const { plans, createPlan, updatePlan, deletePlan } = useGym();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
@@ -95,7 +95,7 @@ export const AdminPlansPage = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setGeneralError(null);
 
@@ -121,11 +121,17 @@ export const AdminPlansPage = () => {
     };
 
     if (editingPlan) {
-      updatePlan(editingPlan.id, payload);
-      addToast('success', `Plan "${formData.nombre}" actualizado.`);
+      const result = await updatePlan(editingPlan.id, payload);
+      if (!result.success) {
+        setGeneralError(result.error);
+        return;
+      }
     } else {
-      createPlan(payload);
-      addToast('success', `Plan "${formData.nombre}" creado exitosamente.`);
+      const result = await createPlan(payload);
+      if (!result.success) {
+        setGeneralError(result.error);
+        return;
+      }
     }
     setIsModalOpen(false);
   };
@@ -352,11 +358,9 @@ export const AdminPlansPage = () => {
       <ConfirmModal
         isOpen={!!deleteConfirmPlan}
         onClose={() => setDeleteConfirmPlan(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (deleteConfirmPlan) {
-            deletePlan(deleteConfirmPlan.id);
-            addToast('info', `Plan "${deleteConfirmPlan.nombre}" eliminado.`);
-            setDeleteConfirmPlan(null);
+            if (await deletePlan(deleteConfirmPlan.id)) setDeleteConfirmPlan(null);
           }
         }}
         title="¿Eliminar Plan?"

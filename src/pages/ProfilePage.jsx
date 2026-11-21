@@ -91,7 +91,7 @@ export const ProfilePage = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleUpdateProfile = e => {
+  const handleUpdateProfile = async e => {
     e.preventDefault();
     if (!targetUser) return;
 
@@ -99,7 +99,7 @@ export const ProfilePage = () => {
       return;
     }
 
-    updateUser(targetUser.id, formData);
+    await updateUser(targetUser.id, formData);
   };
 
   // Pure JavaScript validation for Password Change
@@ -124,7 +124,7 @@ export const ProfilePage = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handlePasswordSubmit = e => {
+  const handlePasswordSubmit = async e => {
     e.preventDefault();
     setPasswordMsg(null);
 
@@ -133,7 +133,7 @@ export const ProfilePage = () => {
       return;
     }
 
-    const res = changePassword(targetUser.id, passwordData.newPassword);
+    const res = await changePassword(targetUser.id, passwordData.newPassword, passwordData.oldPassword);
     if (res.success) {
       setPasswordMsg({ success: 'Contraseña actualizada exitosamente.' });
       setPasswordData({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
