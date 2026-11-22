@@ -403,40 +403,50 @@ export const GymProvider = ({ children }) => {
   };
 
   const registerUser = async userData => {
-    const result = await (async () => {
-      try {
-        const role = roles.find(item => item.id === 'alumno');
-        if (!role?.backendId) throw new Error('No está configurado el rol Alumno.');
-        const savedUser = await apiPost('/users/register', toUserRequest({ ...userData, rol: 'alumno' }));
-        const user = mapUser(savedUser);
-        await apiPost('/auth/register', {
-          username: user.email,
-          password: userData.password,
-          idUser: Number(user.id)
+    try {
+      const email = userData.email.trim().toLowerCase();
+      await apiPost('/auth/register', {
+        email,
+        password: userData.password,
+        paternalSurname: userData.nombre.trim(),
+        maternalSurname: userData.apellido.trim(),
+        phone: userData.telefono || '',
+        firstName: userData.nombre.trim(),
+        lastName: userData.apellido.trim(),
+        rut: userData.rut || '',
+        planId: userData.planId ? Number(userData.planId) : null,
+        emergencyContact: userData.contactoEmergencia || '',
+        avatar: userData.avatar || ''
+      });
+      const loggedIn = await login(email, userData.password);
+      if (!loggedIn) throw new Error('La cuenta se creó, pero no se pudo iniciar sesión.');
+      if (userData.planId) {
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 1);
+        const savedSubscription = await apiPost(`/subscriptions/by-user/${getSessionUserId()}`, {
+          userId: Number(getSessionUserId()),
+          plansId: Number(userData.planId),
+          endDate: `${endDate.toISOString().slice(0, 10)}T23:59:59`,
+          state: true,
+          startDate: `${new Date().toISOString().slice(0, 10)}T00:00:00`,
+          autoRenew: true,
+          paymentMethod: 'Tarjeta de Crédito / Débito'
         });
-        const loggedIn = await login(user.email, userData.password);
-        if (!loggedIn) throw new Error('La cuenta se creó, pero no se pudo iniciar sesión.');
-        if (userData.planId) {
-          const endDate = new Date();
-          endDate.setMonth(endDate.getMonth() + 1);
-          await apiPost(`/subscriptions/by-user/${user.id}`, {
-            userId: Number(user.id),
-            plansId: Number(userData.planId),
-            endDate: `${endDate.toISOString().slice(0, 10)}T23:59:59`,
-            state: true,
-            startDate: `${new Date().toISOString().slice(0, 10)}T00:00:00`,
-            autoRenew: true,
-            paymentMethod: 'Tarjeta de Crédito / Débito'
-          });
-        }
-        return { success: true, user };
-      } catch (error) {
-        addToast('error', `No se pudo completar el registro: ${error.message}`);
-        return { success: false, error: error.message };
+        const plan = plans.find(item => item.id === String(userData.planId));
+        const subscription = mapSubscription({
+          ...savedSubscription,
+          userName: `${userData.nombre.trim()} ${userData.apellido.trim()}`,
+          userEmail: email,
+          planName: plan?.nombre || '',
+          price: plan?.precio || 0
+        });
+        setSubscriptions(prev => [subscription, ...prev.filter(item => item.id !== subscription.id)]);
       }
-    })();
-    if (!result.success) return result;
-    return result;
+      return { success: true };
+    } catch (error) {
+      addToast('error', `No se pudo completar el registro: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   };
 
   const updateUser = async (id, userData) => {

@@ -41,6 +41,8 @@ npm run build
 
 ## Autenticacion
 
+El registro crea el perfil Alumno y sus credenciales en una sola solicitud a `POST /api/v1/auth/register`; no envia un ID de usuario existente.
+
 El inicio de sesion usa `POST /api/v1/auth/login`; el registro crea un usuario Alumno y sus credenciales en el backend. Las solicitudes autenticadas envian `Authorization: Bearer <token>`. El token se elimina al cerrar sesion o cuando el Gateway responde `401`.
 
 La migracion inicial del backend incluye `admin` / `admin123`. Cambia esa credencial antes de exponer el sistema.
