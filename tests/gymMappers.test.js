@@ -20,4 +20,22 @@ describe('mapReservation', () => {
     expect(result.profesorId).toBe('40');
     expect(result.profesorNombre).toBe('Gonzalez Lopez');
   });
+
+  it('uses the student full name returned by the users service', () => {
+    const result = mapReservation({
+      idReservation: 2,
+      idUser: 20,
+      idClasse: 30,
+      reservationStatus: 'CONFIRMADA',
+      user: {
+        id: 20,
+        firstName: 'Camila',
+        lastName: 'Soto',
+        paternalSurname: 'Soto',
+        maternalSurname: 'Perez'
+      }
+    });
+
+    expect(result.alumnoNombre).toBe('Camila Soto');
+  });
 });
