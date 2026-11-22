@@ -34,6 +34,11 @@ export const RegisterPage = () => {
     }
   }, [preselectedPlanId]);
 
+  const selectedPlanExists = plans.some(plan => String(plan.id) === String(formData.planId));
+  const registrationFormData = selectedPlanExists
+    ? formData
+    : { ...formData, planId: preselectedPlanId || plans[0]?.id || '' };
+
   const handleChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -50,7 +55,7 @@ export const RegisterPage = () => {
     setGeneralError(null);
 
     // View-level validation
-    const { isValid, errors: validationErrors } = validateUserForm(formData, {
+    const { isValid, errors: validationErrors } = validateUserForm(registrationFormData, {
       isRegister: true,
       existingUsers: users
     });
@@ -63,7 +68,7 @@ export const RegisterPage = () => {
 
     setIsSubmitting(true);
     try {
-      const result = await registerUser(formData);
+      const result = await registerUser(registrationFormData);
       if (!result.success) {
         setGeneralError(result.error);
         return;
@@ -103,7 +108,7 @@ export const RegisterPage = () => {
       {/* Form Container rendering modular presentational UserForm */}
       <Card>
         <UserForm
-          formData={formData}
+          formData={registrationFormData}
           errors={errors}
           onChange={handleChange}
           onSubmit={handleSubmit}

@@ -98,6 +98,7 @@ export const mapPlan = plan => ({
 export const mapReservation = (reservation, classes = [], users = []) => {
   const gymClass = reservation.classe || classes.find(item => item.id === String(reservation.idClasse));
   const student = reservation.user || users.find(item => item.id === String(reservation.idUser));
+  const coach = reservation.coach;
   return {
     id: String(reservation.idReservation),
     claseId: String(reservation.idClasse),
@@ -111,7 +112,10 @@ export const mapReservation = (reservation, classes = [], users = []) => {
     ].filter(Boolean).join(' '),
     alumnoEmail: student?.email || '',
     profesorId: reservation.idCoach ? String(reservation.idCoach) : gymClass?.profesorId || '',
-    profesorNombre: reservation.coach?.name || gymClass?.coachName || gymClass?.profesorNombre || '',
+    profesorNombre: [
+      coach?.firstName || coach?.paternalSurname || coach?.username,
+      coach?.lastName || coach?.maternalSurname
+    ].filter(Boolean).join(' ') || gymClass?.coachName || gymClass?.profesorNombre || '',
     fechaClase: reservation.reservationDate || '',
     fechaReserva: reservation.createdAt || '',
     estado: String(reservation.reservationStatus || '').toLowerCase(),
