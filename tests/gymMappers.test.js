@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { mapReservation } from '../src/services/gymMappers.js';
+import { mapClass, mapReservation } from '../src/services/gymMappers.js';
 
 describe('mapReservation', () => {
+  it('exposes the class start date separately from its weekday and time', () => {
+    const result = mapClass({
+      id: 5,
+      startDate: '2026-11-29T09:00:00',
+      endDate: '2026-11-29T10:30:00',
+      typeClasse: { name: 'Futbol' }
+    });
+
+    expect(result.fechaVisible).toBe('29-11-2026');
+    expect(result.horario).toContain('09:00 - 10:30');
+  });
+
   it('uses the teacher user returned by the users service', () => {
     const result = mapReservation({
       idReservation: 1,

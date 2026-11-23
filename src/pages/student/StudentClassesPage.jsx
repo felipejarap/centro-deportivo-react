@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGym } from '../../context/GymContext.jsx';
-import { Clock, MapPin, User, CheckCircle2, Filter, Calendar } from 'lucide-react';
+import { Clock, MapPin, User, CheckCircle2, Filter, Calendar, CalendarDays } from 'lucide-react';
 
 export const StudentClassesPage = () => {
   const { classes, reservations, currentUser, bookClass, setCurrentView } = useGym();
@@ -102,6 +102,10 @@ export const StudentClassesPage = () => {
                   </div>
 
                   <div className="space-y-2 text-xs text-neutral-300 pt-3 border-t border-neutral-800/80">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span>Fecha: {cls.fechaVisible || 'Por confirmar'}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                       <span>{cls.horario}</span>

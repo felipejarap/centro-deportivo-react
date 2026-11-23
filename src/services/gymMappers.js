@@ -9,6 +9,16 @@ const roleAliases = {
   cliente: 'alumno'
 };
 
+const formatLocalDate = value => {
+  const [year, month, day] = String(value || '').slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return '';
+  return new Date(year, month - 1, day).toLocaleDateString('es-CL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
+
 export const roleKey = name => {
   const normalized = String(name || '').trim().toLowerCase();
   return roleAliases[normalized] || normalized.replace(/\s+/g, '-');
@@ -42,7 +52,8 @@ export const mapUser = user => ({
 });
 
 export const mapClass = gymClass => {
-  const start = gymClass.startDate ? new Date(gymClass.startDate) : null;
+  const startDateValue = gymClass.startDate || '';
+  const start = startDateValue ? new Date(startDateValue) : null;
   const end = gymClass.endDate ? new Date(gymClass.endDate) : null;
   const startTime = start && !Number.isNaN(start.getTime())
     ? start.toTimeString().slice(0, 5)
@@ -65,7 +76,8 @@ export const mapClass = gymClass => {
     intensidad: gymClass.intensity || 'Media',
     sala: gymClass.room || 'Sala principal',
     horario: `${day}${day ? ' ' : ''}${startTime}${endTime ? ` - ${endTime}` : ''}`.trim(),
-    fecha: gymClass.startDate || '',
+    fecha: startDateValue,
+    fechaVisible: formatLocalDate(startDateValue),
     dias: day ? [day] : [],
     horaInicio: startTime || '08:00',
     horaFin: endTime || '09:00',
@@ -117,6 +129,7 @@ export const mapReservation = (reservation, classes = [], users = []) => {
       coach?.lastName || coach?.maternalSurname
     ].filter(Boolean).join(' ') || gymClass?.coachName || gymClass?.profesorNombre || '',
     fechaClase: reservation.reservationDate || '',
+    fechaVisible: formatLocalDate(reservation.reservationDate),
     fechaReserva: reservation.createdAt || '',
     estado: String(reservation.reservationStatus || '').toLowerCase(),
     asistenciaRegistrada: Boolean(reservation.attended),
