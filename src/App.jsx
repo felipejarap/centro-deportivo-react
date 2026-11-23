@@ -39,6 +39,11 @@ import { ProfilePage } from './pages/general/ProfilePage.jsx';
 
 const AppContent = () => {
   const { currentUser, currentView, setCurrentView } = useGym();
+  const authenticatedHomeView = currentUser?.rol === 'admin'
+    ? 'admin-usuarios'
+    : currentUser?.rol === 'profesor'
+      ? 'profesor-clases'
+      : 'alumno-clases';
   const requiredRole = {
     'profesor-clases': 'profesor',
     'profesor-detalle-clase': 'profesor',
@@ -54,7 +59,9 @@ const AppContent = () => {
   }[currentView];
 
   useEffect(() => {
-    if (currentView === 'perfil' && !currentUser) {
+    if (currentUser && ['login', 'registro'].includes(currentView)) {
+      setCurrentView(authenticatedHomeView);
+    } else if (currentView === 'perfil' && !currentUser) {
       setCurrentView('login');
     } else if (requiredRole && currentUser?.rol !== requiredRole) {
       if (!currentUser) {
@@ -69,9 +76,15 @@ const AppContent = () => {
         setCurrentView('inicio');
       }
     }
-  }, [currentUser, currentView, requiredRole, setCurrentView]);
+  }, [authenticatedHomeView, currentUser, currentView, requiredRole, setCurrentView]);
 
   const renderCurrentView = () => {
+    if (currentUser && ['login', 'registro'].includes(currentView)) {
+      if (currentUser.rol === 'admin') return <AdminUsersPage />;
+      if (currentUser.rol === 'profesor') return <ProfessorClassesPage />;
+      if (currentUser.rol === 'alumno') return <StudentClassesPage />;
+    }
+
     if (currentView === 'perfil' && !currentUser) return <LoginPage />;
 
     if (requiredRole && currentUser?.rol !== requiredRole) {

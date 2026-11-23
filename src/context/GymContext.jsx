@@ -837,8 +837,16 @@ export const GymProvider = ({ children }) => {
       : { usuarioId: userOrData, planId, metodoPago: paymentMethod };
     const user = users.find(item => item.id === String(subData.usuarioId)) || currentUser;
     const plan = plans.find(item => item.id === String(subData.planId));
-    const startDate = subData.fechaInicio || new Date().toISOString().slice(0, 10);
-    const endDate = subData.fechaVencimiento || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const toLocalDate = date => [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0')
+    ].join('-');
+    const start = new Date();
+    const end = new Date(start);
+    end.setDate(end.getDate() + (plan?.duracionDias || 30));
+    const startDate = subData.fechaInicio || toLocalDate(start);
+    const endDate = subData.fechaVencimiento || toLocalDate(end);
     try {
       const subscriptionPath = currentUser?.rol === 'alumno' && currentUser.id === String(subData.usuarioId)
         ? `/subscriptions/by-user/${currentUser.id}`
@@ -858,7 +866,7 @@ export const GymProvider = ({ children }) => {
         userEmail: user?.email || '',
         planName: plan?.nombre || '',
         price: plan?.precio || 0
-      });
+      }, users, plans);
       setSubscriptions(prev => [newSub, ...prev]);
       addToast('success', `Suscripción asignada a ${newSub.usuarioNombre || user?.nombre || 'el usuario'}.`);
       return { success: true, subscription: newSub };

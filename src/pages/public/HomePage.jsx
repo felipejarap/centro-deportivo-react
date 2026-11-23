@@ -1,13 +1,29 @@
 import React from 'react';
 import { useGym } from '../../context/GymContext.jsx';
-import { Dumbbell, ArrowRight, ShieldCheck, Flame, Trophy, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Flame, Trophy, CheckCircle2 } from 'lucide-react';
 
 export const HomePage = () => {
-  const { setCurrentView, setPreselectedPlanId, plans } = useGym();
+  const { currentUser, setCurrentView, setPreselectedPlanId, plans } = useGym();
 
   const handleSelectPlan = planId => {
+    if (currentUser?.rol === 'alumno') {
+      setCurrentView('planes');
+      return;
+    }
     setPreselectedPlanId(planId);
-    setCurrentView('registro');
+    setCurrentView(currentUser ? 'planes' : 'registro');
+  };
+
+  const handleGetStarted = () => {
+    if (!currentUser) {
+      setCurrentView('registro');
+      return;
+    }
+    setCurrentView(currentUser.rol === 'admin'
+      ? 'admin-usuarios'
+      : currentUser.rol === 'profesor'
+        ? 'profesor-clases'
+        : 'alumno-clases');
   };
 
   return (
@@ -42,7 +58,7 @@ export const HomePage = () => {
 
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <button
-                onClick={() => setCurrentView('registro')}
+                onClick={handleGetStarted}
                 className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-all shadow-xl shadow-amber-500/20 flex items-center gap-2 cursor-pointer group"
               >
                 Comenzar Ahora
@@ -283,14 +299,16 @@ export const HomePage = () => {
             ¿Listo para comenzar a entrenar en serio?
           </h2>
           <p className="text-neutral-400 text-sm max-w-xl mx-auto">
-            Crea tu cuenta de socio en menos de 2 minutos y reserva tu primera sesión hoy mismo.
+            {currentUser
+              ? 'Continúa desde tu panel para gestionar tus clases y tu membresía.'
+              : 'Crea tu cuenta de socio en menos de 2 minutos y reserva tu primera sesión hoy mismo.'}
           </p>
           <div className="flex justify-center gap-4">
             <button
-              onClick={() => setCurrentView('registro')}
+              onClick={handleGetStarted}
               className="px-8 py-3 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-colors cursor-pointer"
             >
-              Registrarme como Alumno
+              {currentUser ? 'Ir a mi panel' : 'Registrarme como Alumno'}
             </button>
           </div>
         </div>
