@@ -720,6 +720,17 @@ export const GymProvider = ({ children }) => {
   };
 
   const confirmReservation = async reservationId => {
+    const reservation = reservations.find(item => item.id === reservationId);
+    const alreadyConfirmed = reservation && reservations.some(item => (
+      item.id !== reservationId
+      && item.alumnoId === reservation.alumnoId
+      && item.claseId === reservation.claseId
+      && item.estado === 'confirmada'
+    ));
+    if (alreadyConfirmed) {
+      addToast('info', 'Ya tienes una reserva confirmada para esta clase; no se ocupará otro cupo.');
+      return;
+    }
     await updateReservationStatus(reservationId, 'confirmada');
   };
 

@@ -156,12 +156,22 @@ export const StudentReservationsPage = () => {
                     </span>
                   )}
                   {res.estado === 'cancelada' && isClassDateTodayOrFuture(res.fechaClase) && (
-                    <button
-                      onClick={() => confirmReservation(res.id)}
-                      className="text-amber-400 hover:underline cursor-pointer"
-                    >
-                      Re-confirmar
-                    </button>
+                    myReservations.some(item => (
+                      item.id !== res.id
+                      && item.claseId === res.claseId
+                      && item.estado === 'confirmada'
+                    )) ? (
+                      <span className="text-neutral-500">
+                        Ya tienes una reserva confirmada
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => confirmReservation(res.id)}
+                        className="text-amber-400 hover:underline cursor-pointer"
+                      >
+                        Re-confirmar
+                      </button>
+                    )
                   )}
                 </div>
               </div>
