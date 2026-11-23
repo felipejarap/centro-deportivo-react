@@ -66,6 +66,7 @@ export const UserForm = ({
               name="nombre"
               value={formData.nombre || ''}
               onChange={onChange}
+              aria-invalid={Boolean(errors.nombre)}
               placeholder="Ej: Sofía"
               className={`w-full bg-neutral-900 border rounded-lg pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none transition-colors ${
                 errors.nombre
@@ -82,6 +83,7 @@ export const UserForm = ({
             name="apellido"
             value={formData.apellido || ''}
             onChange={onChange}
+            aria-invalid={Boolean(errors.apellido)}
             placeholder="Ej: Valenzuela"
             className={`w-full bg-neutral-900 border rounded-lg px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none transition-colors ${
               errors.apellido
@@ -102,6 +104,7 @@ export const UserForm = ({
               name="email"
               value={formData.email || ''}
               onChange={onChange}
+              aria-invalid={Boolean(errors.email)}
               placeholder="ejemplo@correo.com"
               className={`w-full bg-neutral-900 border rounded-lg pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none transition-colors ${
                 errors.email
@@ -120,8 +123,13 @@ export const UserForm = ({
               name="telefono"
               value={formData.telefono || ''}
               onChange={onChange}
+              aria-invalid={Boolean(errors.telefono)}
               placeholder="+56 9 1234 5678"
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-amber-500 transition-colors"
+              className={`w-full bg-neutral-900 border rounded-lg pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none transition-colors ${
+                errors.telefono
+                  ? 'border-rose-500 focus:border-rose-500'
+                  : 'border-neutral-800 focus:border-amber-500'
+              }`}
             />
           </div>
         </FormField>
@@ -137,6 +145,7 @@ export const UserForm = ({
               name="rut"
               value={formData.rut || ''}
               onChange={onChange}
+              aria-invalid={Boolean(errors.rut)}
               placeholder="12.345.678-9"
               className={`w-full bg-neutral-900 border rounded-lg pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none transition-colors ${
                 errors.rut ? 'border-rose-500' : 'border-neutral-800 focus:border-amber-500'
@@ -263,6 +272,7 @@ export const UserForm = ({
                   name="password"
                   value={formData.password || ''}
                   onChange={onChange}
+                  aria-invalid={Boolean(errors.password)}
                   placeholder="••••••••"
                   className={`w-full bg-neutral-900 border rounded-lg pl-9 pr-10 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none transition-colors ${
                     errors.password
@@ -293,6 +303,7 @@ export const UserForm = ({
                     name="confirmPassword"
                     value={formData.confirmPassword || ''}
                     onChange={onChange}
+                    aria-invalid={Boolean(errors.confirmPassword)}
                     placeholder="••••••••"
                     className={`w-full bg-neutral-900 border rounded-lg pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:outline-none transition-colors ${
                       errors.confirmPassword

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGym } from '../../context/GymContext.jsx';
 import { UserForm } from '../../components/UserForm.jsx';
 import { Card } from '../../components/Card.jsx';
-import { validateUserForm } from '../../utils/validators.js';
+import { validateUserForm, validateUserFormChange } from '../../utils/validators.js';
 import { Dumbbell, ArrowLeft } from 'lucide-react';
 
 export const RegisterPage = () => {
@@ -41,12 +41,15 @@ export const RegisterPage = () => {
 
   const handleChange = e => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const nextFormData = { ...formData, [name]: value };
+    setFormData(nextFormData);
 
-    // Clear individual error in view state on change
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
+    setErrors(prev =>
+      validateUserFormChange(nextFormData, name, prev, {
+        isRegister: true,
+        existingUsers: users
+      })
+    );
     if (generalError) setGeneralError(null);
   };
 
