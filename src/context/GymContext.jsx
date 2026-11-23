@@ -802,8 +802,11 @@ export const GymProvider = ({ children }) => {
         : await apiPut(`/subscriptions/${subId}`, subscriptionRequest(subscription, {
           estado: 'activa'
         }));
-      setSubscriptions(prev => prev.map(item => item.id === subId ? mapSubscription(saved) : item));
-      addToast('success', 'Suscripción renovada por 30 días adicionales.');
+      setSubscriptions(prev => prev.map(item => item.id === subId
+        ? mapSubscription(saved, users, plans)
+        : item));
+      const plan = plans.find(item => item.id === subscription.planId);
+      addToast('success', `Suscripción renovada por ${plan?.duracionDias || 30} días adicionales.`);
     } catch (error) {
       addToast('error', `No se pudo renovar la suscripción: ${error.message}`);
     }
@@ -819,7 +822,9 @@ export const GymProvider = ({ children }) => {
           estado: 'cancelada',
           renovacionAutomatica: false
         }));
-      setSubscriptions(prev => prev.map(item => item.id === subId ? mapSubscription(saved) : item));
+      setSubscriptions(prev => prev.map(item => item.id === subId
+        ? mapSubscription(saved, users, plans)
+        : item));
       addToast('info', 'Suscripción cancelada. No se generarán cobros recurrentes.');
     } catch (error) {
       addToast('error', `No se pudo cancelar la suscripción: ${error.message}`);
@@ -868,7 +873,9 @@ export const GymProvider = ({ children }) => {
     if (!subscription) return { success: false, error: 'Suscripción no encontrada.' };
     try {
       const saved = await apiPut(`/subscriptions/${subId}`, subscriptionRequest(subscription, subData));
-      setSubscriptions(prev => prev.map(item => item.id === subId ? mapSubscription(saved) : item));
+      setSubscriptions(prev => prev.map(item => item.id === subId
+        ? mapSubscription(saved, users, plans)
+        : item));
       addToast('success', 'Suscripción actualizada.');
       return { success: true };
     } catch (error) {

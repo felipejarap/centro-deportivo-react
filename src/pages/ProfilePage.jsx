@@ -64,8 +64,13 @@ export const ProfilePage = () => {
     );
   }
 
-  const userSub = subscriptions.find(s => s.usuarioId === targetUser.id);
-  const userPlan = plans.find(p => p.id === (userSub?.planId || targetUser.planId));
+  const userSub = subscriptions
+    .filter(subscription => subscription.usuarioId === targetUser.id)
+    .sort((left, right) => {
+      const activeDifference = Number(right.estado === 'activa') - Number(left.estado === 'activa');
+      return activeDifference || String(right.fechaInicio || '').localeCompare(String(left.fechaInicio || ''));
+    })[0];
+  const userPlan = plans.find(plan => plan.id === userSub?.planId);
 
   const userReservations = reservations.filter(r => r.alumnoId === targetUser.id);
   const attendedCount = userReservations.filter(r => r.asistenciaRegistrada).length;
@@ -240,17 +245,17 @@ export const ProfilePage = () => {
                   Membresía Activa
                 </div>
                 <div className="text-lg font-bold text-neutral-100 mt-0.5">
-                  {userPlan?.nombre || userSub?.planNombre || 'Plan Black KRONOFIT'}
+                  {userSub ? userPlan?.nombre || 'Plan no disponible' : 'Sin suscripción registrada'}
                 </div>
               </div>
 
               <div className="text-left sm:text-right">
                 <span className="text-xs text-neutral-400">Tiempo restante: </span>
                 <span className="text-sm font-bold font-mono text-amber-400 tabular-nums">
-                  {userSub?.estado === 'activa' ? `${daysLeft} días` : 'Vencida'}
+                  {!userSub ? 'Sin suscripción' : userSub.estado === 'activa' ? `${daysLeft} días` : 'Vencida'}
                 </span>
                 <div className="text-[11px] text-neutral-500">
-                  Vence: {userSub?.fechaVencimiento || '2026-11-15'}
+                  Vence: {userSub?.fechaVencimiento || '—'}
                 </div>
               </div>
             </div>
@@ -258,7 +263,7 @@ export const ProfilePage = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-3 border-t border-neutral-800/80 text-xs">
               <div>
                 <span className="text-neutral-500 block text-[10px] uppercase font-semibold">Clases del Plan</span>
-                <span className="font-semibold text-neutral-300">{userPlan?.clasesPorMes || 'Ilimitadas'}</span>
+                <span className="font-semibold text-neutral-300">{userPlan?.clasesPorMes || '—'}</span>
               </div>
               <div>
                 <span className="text-neutral-500 block text-[10px] uppercase font-semibold">Total Asistencias</span>
@@ -266,7 +271,7 @@ export const ProfilePage = () => {
               </div>
               <div>
                 <span className="text-neutral-500 block text-[10px] uppercase font-semibold">Estado</span>
-                <span className="capitalize font-semibold text-neutral-300">{userSub?.estado || 'activa'}</span>
+                <span className="capitalize font-semibold text-neutral-300">{userSub?.estado || 'Sin suscripción'}</span>
               </div>
             </div>
           </div>

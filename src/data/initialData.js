@@ -339,20 +339,3 @@ export const INITIAL_RESERVATIONS = [
     asistenciaRegistrada: false
   }
 ];
-
-export const INITIAL_SUBSCRIPTIONS = [
-  {
-    id: 'sub-1',
-    usuarioId: 'usr-alum-1',
-    usuarioNombre: 'Camila Soto',
-    usuarioEmail: 'camila.soto@gmail.com',
-    planId: 'plan-black',
-    planNombre: 'Plan Black KRONOFIT',
-    precio: 45990,
-    fechaInicio: '2026-10-15',
-    fechaVencimiento: '2026-11-15',
-    renovacionAutomatica: true,
-    estado: 'activa',
-    metodoPago: 'Tarjeta de Crédito (•••• 4921)'
-  },
-];

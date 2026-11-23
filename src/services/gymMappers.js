@@ -97,6 +97,7 @@ export const mapPlan = plan => ({
   precio: Number(plan.price),
   moneda: '$',
   periodo: plan.period || 'Mensual',
+  duracionDias: plan.durationDays || 30,
   duracionMeses: plan.durationMonths || Math.max(1, Math.round((plan.durationDays || 30) / 30)),
   clasesPorMes: plan.classesPerMonth || 'Clases según disponibilidad',
   beneficios: Array.isArray(plan.benefits)
@@ -146,7 +147,7 @@ export const mapSubscription = (subscription, users = [], plans = []) => {
     usuarioNombre: subscription.userName || (user ? `${user.nombre} ${user.apellido}` : ''),
     usuarioEmail: subscription.userEmail || user?.email || '',
     planId: String(subscription.plansId),
-    planNombre: subscription.planName || plan?.nombre || '',
+    planNombre: plan?.nombre || '',
     precio: Number(subscription.price || plan?.precio || 0),
     fechaInicio: subscription.startDate || '',
     fechaVencimiento: subscription.endDate || '',
