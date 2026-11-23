@@ -4,7 +4,8 @@ import {
   validateLoginForm,
   validatePlanForm,
   validateRoleForm,
-  validateUserForm
+  validateUserForm,
+  validateUserFormChange
 } from '../src/utils/validators.js';
 
 describe('Formulario de login', () => {
@@ -86,6 +87,74 @@ describe('Formulario de registro', () => {
     expect(result.errors.nombre).toBe('El nombre debe tener al menos 2 caracteres.');
     expect(result.errors.apellido).toBe('El apellido debe tener al menos 2 caracteres.');
     expect(result.errors.password).toBe('La contraseña debe contener al menos 6 caracteres.');
+  });
+
+  it('rechaza números en nombres y apellidos', () => {
+    const result = validateUserForm(
+      {
+        nombre: 'Camila2',
+        apellido: 'Soto3',
+        email: 'camila@example.com',
+        password: 'password123',
+        confirmPassword: 'password123',
+        rol: 'alumno'
+      },
+      { isRegister: true }
+    );
+
+    expect(result.errors.nombre).toBe('El nombre solo puede contener letras y espacios.');
+    expect(result.errors.apellido).toBe('El apellido solo puede contener letras y espacios.');
+  });
+
+  it('acepta nombres con tildes y teléfono formateado, y rechaza letras en el teléfono', () => {
+    const validData = {
+      nombre: 'José María',
+      apellido: 'Muñoz',
+      email: 'jose@example.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+      telefono: '+56 9 1234 5678',
+      rol: 'alumno'
+    };
+
+    expect(validateUserForm(validData, { isRegister: true }).isValid).toBe(true);
+
+    const result = validateUserForm(
+      { ...validData, telefono: '+56 9 ABCD 5678' },
+      { isRegister: true }
+    );
+    expect(result.errors.telefono).toBe(
+      'Ingresa un teléfono válido, por ejemplo: +56 9 1234 5678.'
+    );
+  });
+
+  it('valida campos al cambiar y conserva los errores de otros campos', () => {
+    const formData = {
+      nombre: 'Camila2',
+      apellido: 'Soto',
+      email: 'camila@example.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+      telefono: '',
+      rol: 'alumno'
+    };
+    const errors = validateUserFormChange(
+      formData,
+      'nombre',
+      { email: 'Formato de correo electrónico inválido.' },
+      { isRegister: true }
+    );
+
+    expect(errors.nombre).toBe('El nombre solo puede contener letras y espacios.');
+    expect(errors.email).toBe('Formato de correo electrónico inválido.');
+
+    const correctedErrors = validateUserFormChange(
+      { ...formData, nombre: 'Camila' },
+      'nombre',
+      errors,
+      { isRegister: true }
+    );
+    expect(correctedErrors.nombre).toBeUndefined();
   });
 
   it('rechaza correos duplicados', () => {

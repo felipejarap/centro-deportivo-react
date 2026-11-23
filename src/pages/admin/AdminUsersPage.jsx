@@ -7,7 +7,7 @@ import { ConfirmModal } from '../../components/ConfirmModal.jsx';
 import { Badge } from '../../components/Badge.jsx';
 import { Button } from '../../components/Button.jsx';
 import { UserForm } from '../../components/UserForm.jsx';
-import { validateUserForm } from '../../utils/validators.js';
+import { validateUserForm, validateUserFormChange } from '../../utils/validators.js';
 import {
   Users,
   UserPlus,
@@ -104,11 +104,16 @@ export const AdminUsersPage = () => {
 
   const handleFormChange = e => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const nextFormData = { ...formData, [name]: value };
+    setFormData(nextFormData);
 
-    if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: null }));
-    }
+    setFormErrors(prev =>
+      validateUserFormChange(nextFormData, name, prev, {
+        isEdit: !!editingUser,
+        existingUsers: users,
+        currentUserId: editingUser?.id
+      })
+    );
     if (generalError) setGeneralError(null);
   };
 

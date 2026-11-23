@@ -3,7 +3,8 @@ import {
   validateLoginForm,
   validatePlanForm,
   validateRoleForm,
-  validateUserForm
+  validateUserForm,
+  validateUserFormChange
 } from '../../src/utils/validators.js';
 
 describe('Validadores de formularios con Jasmine', () => {
@@ -58,6 +59,56 @@ describe('Validadores de formularios con Jasmine', () => {
         { isRegister: true }
       );
       expect(result.errors.confirmPassword).toBe('Las contraseñas no coinciden.');
+    });
+
+    it('rechaza números en nombres y apellidos', () => {
+      const result = validateUserForm(
+        { ...validUser, nombre: 'Camila2', apellido: 'Soto3' },
+        { isRegister: true }
+      );
+      expect(result.errors.nombre).toBe('El nombre solo puede contener letras y espacios.');
+      expect(result.errors.apellido).toBe('El apellido solo puede contener letras y espacios.');
+    });
+
+    it('acepta tildes y teléfono formateado, pero rechaza letras en el teléfono', () => {
+      const validData = {
+        ...validUser,
+        nombre: 'José María',
+        apellido: 'Muñoz',
+        telefono: '+56 9 1234 5678'
+      };
+      expect(validateUserForm(validData, { isRegister: true }).isValid).toBeTrue();
+
+      const result = validateUserForm(
+        { ...validData, telefono: '+56 9 ABCD 5678' },
+        { isRegister: true }
+      );
+      expect(result.errors.telefono).toBe(
+        'Ingresa un teléfono válido, por ejemplo: +56 9 1234 5678.'
+      );
+    });
+
+    it('valida cada cambio y conserva los errores de otros campos', () => {
+      const formData = {
+        ...validUser,
+        nombre: 'Camila2'
+      };
+      const errors = validateUserFormChange(
+        formData,
+        'nombre',
+        { email: 'Formato de correo electrónico inválido.' },
+        { isRegister: true }
+      );
+      expect(errors.nombre).toBe('El nombre solo puede contener letras y espacios.');
+      expect(errors.email).toBe('Formato de correo electrónico inválido.');
+
+      const correctedErrors = validateUserFormChange(
+        { ...formData, nombre: 'Camila' },
+        'nombre',
+        errors,
+        { isRegister: true }
+      );
+      expect(correctedErrors.nombre).toBeUndefined();
     });
 
     it('acepta un registro válido', () => {

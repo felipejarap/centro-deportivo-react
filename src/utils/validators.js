@@ -4,6 +4,9 @@
  * Components remain purely presentational and receive errors via props.
  */
 
+const PERSON_NAME_PATTERN = /^[\p{L} ]+$/u;
+const PHONE_PATTERN = /^\+?\d+(?: \d+)*$/;
+
 export const validateUserForm = (formData, options = {}) => {
   const { isRegister = false, isEdit = false, existingUsers = [], currentUserId = null } = options;
   const errors = {};
@@ -11,6 +14,8 @@ export const validateUserForm = (formData, options = {}) => {
   // Nombre
   if (!formData.nombre || !formData.nombre.trim()) {
     errors.nombre = 'El nombre es obligatorio.';
+  } else if (!PERSON_NAME_PATTERN.test(formData.nombre.trim().normalize('NFC'))) {
+    errors.nombre = 'El nombre solo puede contener letras y espacios.';
   } else if (formData.nombre.trim().length < 2) {
     errors.nombre = 'El nombre debe tener al menos 2 caracteres.';
   }
@@ -18,8 +23,15 @@ export const validateUserForm = (formData, options = {}) => {
   // Apellido
   if (!formData.apellido || !formData.apellido.trim()) {
     errors.apellido = 'El apellido es obligatorio.';
+  } else if (!PERSON_NAME_PATTERN.test(formData.apellido.trim().normalize('NFC'))) {
+    errors.apellido = 'El apellido solo puede contener letras y espacios.';
   } else if (formData.apellido.trim().length < 2) {
     errors.apellido = 'El apellido debe tener al menos 2 caracteres.';
+  }
+
+  const phone = String(formData.telefono || '').trim();
+  if (phone && !PHONE_PATTERN.test(phone)) {
+    errors.telefono = 'Ingresa un teléfono válido, por ejemplo: +56 9 1234 5678.';
   }
 
   // Email
@@ -71,6 +83,35 @@ export const validateUserForm = (formData, options = {}) => {
     isValid: Object.keys(errors).length === 0,
     errors
   };
+};
+
+export const validateUserFormChange = (formData, changedField, currentErrors = {}, options = {}) => {
+  const { errors: validationErrors } = validateUserForm(formData, options);
+  const fieldsToValidate = [changedField];
+
+  if (
+    changedField === 'password' &&
+    (formData.confirmPassword || currentErrors.confirmPassword)
+  ) {
+    fieldsToValidate.push('confirmPassword');
+  }
+  if (
+    changedField === 'rol' &&
+    (formData.especialidad || currentErrors.especialidad)
+  ) {
+    fieldsToValidate.push('especialidad');
+  }
+
+  const nextErrors = { ...currentErrors };
+  fieldsToValidate.forEach(field => {
+    if (validationErrors[field]) {
+      nextErrors[field] = validationErrors[field];
+    } else {
+      delete nextErrors[field];
+    }
+  });
+
+  return nextErrors;
 };
 
 export const validateRoleForm = (formData, options = {}) => {
