@@ -2,6 +2,15 @@ import React from 'react';
 import { useGym } from '../../context/GymContext.jsx';
 import { Calendar, Clock, MapPin, User, CheckCircle2, Plus } from 'lucide-react';
 
+const isClassDateTodayOrFuture = date => {
+  const [year, month, day] = String(date || '').slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return false;
+  const classDate = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return classDate >= today;
+};
+
 export const StudentReservationsPage = () => {
   const { reservations, currentUser, cancelReservation, confirmReservation, setCurrentView } = useGym();
 
@@ -146,7 +155,7 @@ export const StudentReservationsPage = () => {
                       Cancelada
                     </span>
                   )}
-                  {res.estado === 'cancelada' && (
+                  {res.estado === 'cancelada' && isClassDateTodayOrFuture(res.fechaClase) && (
                     <button
                       onClick={() => confirmReservation(res.id)}
                       className="text-amber-400 hover:underline cursor-pointer"
