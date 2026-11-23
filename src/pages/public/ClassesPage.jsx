@@ -5,6 +5,14 @@ import { Clock, MapPin, User as UserIcon, Filter, ArrowRight, CalendarDays } fro
 export const ClassesPage = () => {
   const { classes, setCurrentView, currentUser } = useGym();
   const [selectedCategory, setSelectedCategory] = useState('todas');
+  const dashboardView = currentUser?.rol === 'admin'
+    ? 'admin-usuarios'
+    : currentUser?.rol === 'profesor'
+      ? 'profesor-clases'
+      : 'alumno-clases';
+  const handleReservationNavigation = () => {
+    setCurrentView(currentUser ? dashboardView : 'registro');
+  };
 
   const categories = ['todas', 'CrossFit & Funcional', 'Fuerza & Levantamiento', 'Yoga & Movilidad', 'Cardio & HIIT'];
 
@@ -30,7 +38,7 @@ export const ClassesPage = () => {
 
         {currentUser?.rol === 'alumno' ? (
           <button
-            onClick={() => setCurrentView('alumno-clases')}
+            onClick={handleReservationNavigation}
             className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-colors flex items-center gap-2 cursor-pointer self-start md:self-auto"
           >
             Ir a Reservar Cupo
@@ -38,10 +46,10 @@ export const ClassesPage = () => {
           </button>
         ) : (
           <button
-            onClick={() => setCurrentView('registro')}
+            onClick={handleReservationNavigation}
             className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-colors flex items-center gap-2 cursor-pointer self-start md:self-auto"
           >
-            Registrarme para Reservar
+            {currentUser ? 'Ir a mi panel' : 'Registrarme para Reservar'}
             <ArrowRight className="w-4 h-4" />
           </button>
         )}
@@ -132,17 +140,17 @@ export const ClassesPage = () => {
 
               {currentUser?.rol === 'alumno' ? (
                 <button
-                  onClick={() => setCurrentView('alumno-clases')}
+                  onClick={handleReservationNavigation}
                   className="px-4 py-2 text-xs font-bold text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-colors cursor-pointer"
                 >
                   Reservar
                 </button>
               ) : (
                 <button
-                  onClick={() => setCurrentView('registro')}
+                  onClick={handleReservationNavigation}
                   className="px-4 py-2 text-xs font-semibold text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors cursor-pointer"
                 >
-                  Inscribirse
+                  {currentUser ? 'Mi panel' : 'Inscribirse'}
                 </button>
               )}
             </div>

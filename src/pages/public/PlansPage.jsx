@@ -1,12 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGym } from '../../context/GymContext.jsx';
 import { CheckCircle2, HelpCircle } from 'lucide-react';
 
 export const PlansPage = () => {
-  const { plans, setCurrentView, setPreselectedPlanId } = useGym();
+  const {
+    plans,
+    currentUser,
+    subscriptions,
+    setCurrentView,
+    setPreselectedPlanId,
+    createSubscription,
+    addToast
+  } = useGym();
+  const [submittingPlanId, setSubmittingPlanId] = useState(null);
 
-  const handleChoosePlan = planId => {
-    setPreselectedPlanId(planId);
+  const handleChoosePlan = async plan => {
+    if (currentUser?.rol === 'alumno') {
+      const existingSubscription = subscriptions.find(
+        subscription => subscription.usuarioId === currentUser.id && subscription.estado === 'activa'
+      );
+      if (existingSubscription) {
+        addToast('info', 'Ya tienes una suscripción activa. Puedes revisarla desde Mi Suscripción.');
+        setCurrentView('alumno-suscripcion');
+        return;
+      }
+
+      setSubmittingPlanId(plan.id);
+      try {
+        const result = await createSubscription(currentUser.id, plan.id);
+        if (result.success) setCurrentView('alumno-suscripcion');
+      } catch (error) {
+        addToast('error', `No se pudo seleccionar el plan: ${error.message}`);
+      } finally {
+        setSubmittingPlanId(null);
+      }
+      return;
+    }
+
+    if (currentUser) {
+      addToast('error', 'Solo los alumnos pueden contratar una suscripción.');
+      return;
+    }
+
+    setPreselectedPlanId(plan.id);
     setCurrentView('registro');
   };
 
@@ -29,6 +65,11 @@ export const PlansPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
         {plans.map(plan => {
           const isFeatured = plan.destacado;
+          const isSubmitting = submittingPlanId === plan.id;
+          const hasActiveSubscription = currentUser?.rol === 'alumno'
+            && subscriptions.some(subscription => (
+              subscription.usuarioId === currentUser.id && subscription.estado === 'activa'
+            ));
 
           return (
             <div
@@ -75,14 +116,24 @@ export const PlansPage = () => {
 
               <div className="mt-8 pt-6 border-t border-neutral-800/60">
                 <button
-                  onClick={() => handleChoosePlan(plan.id)}
+                  type="button"
+                  onClick={() => handleChoosePlan(plan)}
+                  disabled={isSubmitting || !plan.estado || plan.estado !== 'activo'}
                   className={`w-full py-3 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
                     isFeatured
                       ? 'bg-amber-500 hover:bg-amber-400 text-neutral-950 shadow-lg shadow-amber-500/20'
                       : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'
-                  }`}
+                  } disabled:cursor-not-allowed disabled:opacity-50`}
                 >
-                  Contratar este Plan
+                  {isSubmitting
+                    ? 'Procesando...'
+                    : hasActiveSubscription
+                      ? 'Ver mi suscripción'
+                      : currentUser?.rol === 'alumno'
+                        ? 'Contratar este Plan'
+                        : currentUser
+                          ? 'Disponible para alumnos'
+                          : 'Contratar este Plan'}
                 </button>
               </div>
             </div>

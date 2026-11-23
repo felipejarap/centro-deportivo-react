@@ -13,8 +13,6 @@ export const Navbar = () => {
 
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
 
-  const isPublicView = ['inicio', 'planes', 'clases', 'nosotros', 'login', 'registro'].includes(currentView);
-
   const handleNavClick = view => {
     setViewingProfileUserId(null);
     setCurrentView(view);
@@ -43,7 +41,7 @@ export const Navbar = () => {
 
         {/* Zone 2: 4-5 single-line clean text navigation links */}
         <nav className="hidden md:flex items-center gap-6 text-xs font-semibold uppercase tracking-wider text-neutral-400">
-          {(!currentUser || isPublicView) && (
+          {!currentUser && (
             <>
               <button
                 onClick={() => handleNavClick('inicio')}
@@ -91,7 +89,7 @@ export const Navbar = () => {
           )}
 
           {/* Student Navigation */}
-          {currentUser && currentUser.rol === 'alumno' && !isPublicView && (
+          {currentUser && currentUser.rol === 'alumno' && (
             <>
               <button
                 onClick={() => handleNavClick('alumno-clases')}
@@ -129,7 +127,7 @@ export const Navbar = () => {
           )}
 
           {/* Professor Navigation */}
-          {currentUser && currentUser.rol === 'profesor' && !isPublicView && (
+          {currentUser && currentUser.rol === 'profesor' && (
             <>
               <button
                 onClick={() => handleNavClick('profesor-clases')}
@@ -151,7 +149,7 @@ export const Navbar = () => {
           )}
 
           {/* Admin Navigation */}
-          {currentUser && currentUser.rol === 'admin' && !isPublicView && (
+          {currentUser && currentUser.rol === 'admin' && (
             <>
               <button
                 onClick={() => handleNavClick('admin-usuarios')}
