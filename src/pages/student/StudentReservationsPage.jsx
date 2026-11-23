@@ -73,7 +73,7 @@ export const StudentReservationsPage = () => {
                       Reserva Confirmada
                     </span>
                     <span className="text-[11px] text-neutral-400 font-mono">
-                      Fecha: {res.fechaClase}
+                      Fecha: {res.fechaVisible || res.fechaClase}
                     </span>
                   </div>
 
@@ -140,7 +140,7 @@ export const StudentReservationsPage = () => {
                     {res.claseNombre}
                   </div>
                   <div>
-                    {res.fechaClase} · {res.claseHorario} · Coach: {res.profesorNombre}
+                    {res.fechaVisible || res.fechaClase} · {res.claseHorario} · Coach: {res.profesorNombre}
                   </div>
                 </div>
 

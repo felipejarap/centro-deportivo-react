@@ -205,7 +205,10 @@ export const AdminClassesPage = () => {
                     </td>
 
                     <td className="py-3.5 px-4 text-neutral-300">
-                      {cls.horario}
+                      <div>{cls.horario}</div>
+                      <div className="text-[11px] text-neutral-500">
+                        Fecha de inicio: {cls.fechaVisible || 'Por confirmar'}
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-4 text-neutral-400">
