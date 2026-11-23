@@ -3,11 +3,17 @@ import { useGym } from '../../context/GymContext.jsx';
 import { CreditCard, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export const StudentSubscriptionPage = () => {
-  const { subscriptions, plans, currentUser, renewSubscription, cancelSubscription } = useGym();
+  const { subscriptions, plans, currentUser, renewSubscription, cancelSubscription, setCurrentView } = useGym();
 
-  const mySubscription = subscriptions.find(s => s.usuarioId === currentUser?.id);
+  const mySubscription = subscriptions
+    .filter(subscription => subscription.usuarioId === currentUser?.id)
+    .sort((left, right) => {
+      const activeDifference = Number(right.estado === 'activa') - Number(left.estado === 'activa');
+      return activeDifference || String(right.fechaInicio || '').localeCompare(String(left.fechaInicio || ''));
+    })[0];
   const currentPlan = plans.find(p => p.id === mySubscription?.planId);
   const subscriptionPrice = mySubscription?.precio ?? mySubscription?.monto ?? currentPlan?.precio;
+  const canRenew = Boolean(mySubscription && currentPlan?.estado === 'activo');
 
   const [confirmCancelModal, setConfirmCancelModal] = useState(false);
 
@@ -35,7 +41,23 @@ export const StudentSubscriptionPage = () => {
         </p>
       </div>
 
-      {/* Main Subscription Card */}
+      {!mySubscription ? (
+        <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-8 text-center space-y-4">
+          <h2 className="text-xl font-bold text-neutral-100">No tienes una suscripción registrada</h2>
+          <p className="text-sm text-neutral-400">
+            Revisa los planes disponibles para elegir una membresía.
+          </p>
+          <button
+            type="button"
+            onClick={() => setCurrentView('planes')}
+            className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-colors cursor-pointer"
+          >
+            Ver planes disponibles
+          </button>
+        </div>
+      ) : (
+      <>
+        {/* Main Subscription Card */}
       <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6 sm:p-8 space-y-8 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
@@ -55,7 +77,7 @@ export const StudentSubscriptionPage = () => {
             </div>
 
             <h2 className="text-2xl font-display font-bold text-neutral-100">
-              {mySubscription?.planNombre || 'Plan Black KRONOFIT'}
+              {currentPlan?.nombre || mySubscription.planNombre || 'Plan no disponible'}
             </h2>
             <p className="text-xs text-neutral-400 mt-1">
               Titular: {currentUser?.nombre} {currentUser?.apellido} ({currentUser?.email})
@@ -66,7 +88,9 @@ export const StudentSubscriptionPage = () => {
             <div className="text-xs text-neutral-400">Tarifa Vigente</div>
             <div className="text-2xl sm:text-3xl font-black font-mono text-neutral-100 tabular-nums">
               ${subscriptionPrice?.toLocaleString('es-CL') || '—'}
-              <span className="text-xs text-neutral-400 font-sans font-normal"> / mes</span>
+              <span className="text-xs text-neutral-400 font-sans font-normal">
+                {' / '}{currentPlan?.period || `${currentPlan?.duracionDias || 30} días`}
+              </span>
             </div>
           </div>
         </div>
@@ -92,11 +116,11 @@ export const StudentSubscriptionPage = () => {
           <div className="grid grid-cols-2 gap-4 pt-2 text-xs text-neutral-400">
             <div>
               <span className="block text-[10px] text-neutral-500 uppercase font-semibold">Fecha de Inicio</span>
-              <span className="font-mono text-neutral-200">{mySubscription?.fechaInicio || '2026-10-15'}</span>
+              <span className="font-mono text-neutral-200">{mySubscription.fechaInicio || '—'}</span>
             </div>
             <div>
               <span className="block text-[10px] text-neutral-500 uppercase font-semibold">Fecha de Vencimiento</span>
-              <span className="font-mono text-neutral-200">{mySubscription?.fechaVencimiento || '2026-11-15'}</span>
+              <span className="font-mono text-neutral-200">{mySubscription.fechaVencimiento || '—'}</span>
             </div>
           </div>
         </div>
@@ -109,7 +133,7 @@ export const StudentSubscriptionPage = () => {
             </h3>
             <div className="flex items-center gap-3 p-3 bg-neutral-950/60 border border-neutral-800 rounded-lg text-xs text-neutral-300">
               <CreditCard className="w-4 h-4 text-amber-500 shrink-0" />
-              <span>{mySubscription?.metodoPago || 'Tarjeta de Crédito (•••• 4921)'}</span>
+              <span>{mySubscription.metodoPago || 'No registrado'}</span>
             </div>
           </div>
 
@@ -123,17 +147,9 @@ export const StudentSubscriptionPage = () => {
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   <span>{b}</span>
                 </li>
-              )) || (
-                <>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Clases grupales ilimitadas</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Acceso libre a sala de máquinas</span>
-                  </li>
-                </>
+              ))}
+              {!currentPlan && (
+                <li>No se encontró el plan asociado en los planes disponibles.</li>
               )}
             </ul>
           </div>
@@ -143,8 +159,9 @@ export const StudentSubscriptionPage = () => {
         <div className="pt-6 border-t border-neutral-800 flex flex-wrap items-center justify-between gap-4">
           <div className="text-xs text-neutral-400">
             {isActive
-              ? 'Puedes renovar tu plan de forma manual para sumar 30 días.'
-              : 'Tu suscripción está inactiva. Renueva ahora para volver a reservar clases.'}
+              ? `Puedes renovar tu plan de forma manual para sumar ${currentPlan?.duracionDias || 'los'} días.`
+              : 'Tu suscripción está inactiva. Renueva para volver a reservar clases.'}
+            {!currentPlan && ' El plan asociado no está disponible, así que no se puede renovar.'}
           </div>
 
           <div className="flex items-center gap-3">
@@ -160,8 +177,9 @@ export const StudentSubscriptionPage = () => {
 
             <button
               type="button"
-              onClick={() => mySubscription && renewSubscription(mySubscription.id)}
-              className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-lg transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/10"
+              onClick={() => canRenew && renewSubscription(mySubscription.id)}
+              disabled={!canRenew}
+              className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-amber-500 hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/10"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Renovar Membresía
@@ -179,7 +197,7 @@ export const StudentSubscriptionPage = () => {
               <h3 className="text-lg font-bold text-neutral-100">¿Cancelar tu suscripción?</h3>
             </div>
             <p className="text-xs text-neutral-400 leading-relaxed">
-              Al cancelar tu membresía se desactivará el cobro automático. Podrás seguir disfrutando de tus clases hasta la fecha de vencimiento actual ({mySubscription?.fechaVencimiento}).
+              Al cancelar tu membresía se desactivará el cobro automático. Podrás seguir disfrutando de tus clases hasta la fecha de vencimiento actual ({mySubscription.fechaVencimiento}).
             </p>
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-800">
               <button
@@ -200,6 +218,8 @@ export const StudentSubscriptionPage = () => {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mapClass, mapReservation } from '../src/services/gymMappers.js';
+import { mapClass, mapPlan, mapReservation, mapSubscription } from '../src/services/gymMappers.js';
 
 describe('mapReservation', () => {
   it('exposes the class start date separately from its weekday and time', () => {
@@ -49,5 +49,28 @@ describe('mapReservation', () => {
     });
 
     expect(result.alumnoNombre).toBe('Camila Soto');
+  });
+});
+
+describe('subscription mapping', () => {
+  it('uses the existing catalog plan and its real duration', () => {
+    const plan = mapPlan({
+      id: 1,
+      name: 'Basico',
+      price: 15000,
+      durationDays: 7,
+      active: true
+    });
+    const subscription = mapSubscription({
+      id: 4,
+      userId: 900003,
+      plansId: 1,
+      planName: 'Plan Black KRONOFIT',
+      price: 45990,
+      state: true
+    }, [], [plan]);
+
+    expect(plan.duracionDias).toBe(7);
+    expect(subscription.planNombre).toBe('Basico');
   });
 });
